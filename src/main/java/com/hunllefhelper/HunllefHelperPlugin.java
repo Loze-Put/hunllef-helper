@@ -87,7 +87,7 @@ public class HunllefHelperPlugin extends Plugin
 	@Override
 	protected void shutDown() throws Exception
 	{
-		clientToolbar.removeNavigation(navigationButton);
+		updateNavigationBar(false, false);
 	}
 
 	@Subscribe
@@ -191,7 +191,7 @@ public class HunllefHelperPlugin extends Plugin
 		}
 		catch (Exception ex)
 		{
-			log.info(ex.getMessage());
+			log.error(ex.getMessage());
 		}
 	}
 
