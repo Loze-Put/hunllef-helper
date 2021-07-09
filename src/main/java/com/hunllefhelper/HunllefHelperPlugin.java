@@ -88,6 +88,13 @@ public class HunllefHelperPlugin extends Plugin
 	protected void shutDown() throws Exception
 	{
 		updateNavigationBar(false, false);
+		if (executorService != null)
+		{
+			executorService.shutdownNow();
+			executorService = null;
+		}
+		panel = null;
+		navigationButton = null;
 	}
 
 	@Subscribe
