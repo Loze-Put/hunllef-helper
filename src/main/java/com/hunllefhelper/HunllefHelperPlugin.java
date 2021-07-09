@@ -12,6 +12,8 @@ import static com.hunllefhelper.PluginConstants.SOUND_RANGE;
 import static com.hunllefhelper.PluginConstants.SOUND_TWO;
 import com.hunllefhelper.ui.HunllefHelperPluginPanel;
 import java.awt.Color;
+import java.io.BufferedInputStream;
+import java.io.InputStream;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -191,9 +193,12 @@ public class HunllefHelperPlugin extends Plugin
 
 		try
 		{
+			InputStream audioSource = getClass().getResourceAsStream(soundFile);
+			BufferedInputStream bufferedStream = new BufferedInputStream(audioSource);
+			AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(bufferedStream);
+
 			Clip clip = AudioSystem.getClip();
-			AudioInputStream inputStream = AudioSystem.getAudioInputStream(getClass().getResourceAsStream(soundFile));
-			clip.open(inputStream);
+			clip.open(audioInputStream);
 			clip.start();
 		}
 		catch (Exception ex)
