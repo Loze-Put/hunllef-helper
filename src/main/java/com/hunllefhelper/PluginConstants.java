@@ -19,7 +19,7 @@ final class PluginConstants
 
 	// Timings
 	public static final int MILLIS_PER_TICK = 600;
-	public static final int COUNTER_INTERVAL = 100;
+	public static final int COUNTER_INTERVAL = 200;
 	public static final int INITIAL_COUNTER = MILLIS_PER_TICK * 14;
 	public static final int ATTACK_DURATION = MILLIS_PER_TICK * 5;
 	public static final int ROTATION_DURATION = ATTACK_DURATION * 4;

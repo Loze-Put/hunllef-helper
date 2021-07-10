@@ -13,6 +13,7 @@ import static com.hunllefhelper.PluginConstants.SOUND_TWO;
 import com.hunllefhelper.ui.HunllefHelperPluginPanel;
 import java.awt.Color;
 import java.io.BufferedInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -21,6 +22,8 @@ import javax.inject.Inject;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
@@ -54,6 +57,8 @@ public class HunllefHelperPlugin extends Plugin
 	private HunllefHelperPluginPanel panel;
 
 	private ScheduledExecutorService executorService;
+	private Clip clip;
+
 	private int counter;
 	private boolean isRanged;
 	private boolean wasInInstance;
@@ -75,28 +80,18 @@ public class HunllefHelperPlugin extends Plugin
 
 		panel.setCounterActiveState(false);
 
-		if (config.autoHide())
-		{
-			wasInInstance = isInTheGauntlet();
-			updateNavigationBar(wasInInstance, true);
-		}
-		else
-		{
-			updateNavigationBar(true, false);
-		}
+		wasInInstance = isInTheGauntlet();
+		updateNavigationBar((!config.autoHide() || wasInInstance), false);
 	}
 
 	@Override
 	protected void shutDown() throws Exception
 	{
 		updateNavigationBar(false, false);
-		if (executorService != null)
-		{
-			executorService.shutdownNow();
-			executorService = null;
-		}
+		shutdownExecutorService();
 		panel = null;
 		navigationButton = null;
+		closeClip();
 	}
 
 	@Subscribe
@@ -118,7 +113,8 @@ public class HunllefHelperPlugin extends Plugin
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event)
 	{
-		updateNavigationBar((!config.autoHide() || isInTheGauntlet()), false);
+		wasInInstance = isInTheGauntlet();
+		updateNavigationBar((!config.autoHide() || wasInInstance), false);
 	}
 
 	public void start()
@@ -139,8 +135,15 @@ public class HunllefHelperPlugin extends Plugin
 
 	public void reset()
 	{
-		executorService.shutdown();
+		shutdownExecutorService();
+		closeClip();
 		panel.setCounterActiveState(false);
+	}
+
+	@Provides
+	HunllefHelperConfig provideConfig(ConfigManager configManager)
+	{
+		return configManager.getConfig(HunllefHelperConfig.class);
 	}
 
 	private void tickCounter()
@@ -178,12 +181,6 @@ public class HunllefHelperPlugin extends Plugin
 		}
 	}
 
-	@Provides
-	HunllefHelperConfig provideConfig(ConfigManager configManager)
-	{
-		return configManager.getConfig(HunllefHelperConfig.class);
-	}
-
 	private void playSoundClip(String soundFile)
 	{
 		if (config.mute())
@@ -191,19 +188,18 @@ public class HunllefHelperPlugin extends Plugin
 			return;
 		}
 
-		try
+		try (InputStream audioSource = getClass().getResourceAsStream(soundFile);
+			 BufferedInputStream bufferedStream = new BufferedInputStream(audioSource);
+			 AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(bufferedStream))
 		{
-			InputStream audioSource = getClass().getResourceAsStream(soundFile);
-			BufferedInputStream bufferedStream = new BufferedInputStream(audioSource);
-			AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(bufferedStream);
-
-			Clip clip = AudioSystem.getClip();
+			closeClip();
+			clip = AudioSystem.getClip();
 			clip.open(audioInputStream);
 			clip.start();
 		}
-		catch (Exception ex)
+		catch (UnsupportedAudioFileException | IOException | LineUnavailableException | SecurityException ex)
 		{
-			log.error(ex.getMessage());
+			log.error("Could not play audio", ex);
 		}
 	}
 
@@ -238,8 +234,27 @@ public class HunllefHelperPlugin extends Plugin
 		}
 		else
 		{
+			reset();
 			navigationButton.setSelected(false);
 			clientToolbar.removeNavigation(navigationButton);
+		}
+	}
+
+	private void closeClip()
+	{
+		if (clip != null)
+		{
+			clip.close();
+			clip = null;
+		}
+	}
+
+	private void shutdownExecutorService()
+	{
+		if (executorService != null)
+		{
+			executorService.shutdown();
+			executorService = null;
 		}
 	}
 }
