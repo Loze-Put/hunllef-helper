@@ -117,12 +117,20 @@ public class HunllefHelperPlugin extends Plugin
 		updateNavigationBar((!config.autoHide() || wasInInstance), false);
 	}
 
-	public void start()
+	public void start(boolean withRanged)
 	{
-		isRanged = true;
-		counter = INITIAL_COUNTER;
-		panel.setStyle("Ranged", Color.GREEN);
+		isRanged = withRanged;
+
+		if (withRanged)
+		{
+			panel.setStyle("Ranged", Color.GREEN);
+		}
+		else
+		{
+			panel.setStyle("Mage", Color.CYAN);
+		}
 		panel.setCounterActiveState(true);
+		counter = INITIAL_COUNTER;
 
 		executorService = Executors.newSingleThreadScheduledExecutor();
 		executorService.scheduleAtFixedRate(this::tickCounter, 0, COUNTER_INTERVAL, TimeUnit.MILLISECONDS);
@@ -149,7 +157,7 @@ public class HunllefHelperPlugin extends Plugin
 	private void tickCounter()
 	{
 		counter -= COUNTER_INTERVAL;
-		panel.setTime(counter + 1000);
+		panel.setTime(counter);
 
 		if (counter == 2000)
 		{
