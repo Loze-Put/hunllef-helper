@@ -28,6 +28,9 @@ public class HunllefHelperPluginPanel extends PluginPanel
 	private final JLabel timeLabel;
 	private final JLabel styleLabel;
 
+	private Button startRangedButton;
+	private Button startMageButton;
+	private Button trampleButton;
 	private Button resetButton;
 
 	@Inject
@@ -66,21 +69,13 @@ public class HunllefHelperPluginPanel extends PluginPanel
 		JLabel instructionLabel = new JLabel("<html>Press 'Start' right after you got hit by the first Hunllef attack. Press the 'I got trampled!' button if you get trampled by Hunllef.</html>");
 		instructionLabel.setBorder(new EmptyBorder(BORDER_OFFSET, 0, BORDER_OFFSET, 0));
 
-		Button startButton = new Button("Start");
-		startButton.addMouseButton1PressedHandler(plugin::start);
-
-		Button trampleButton = new Button("I got trampled!");
-		trampleButton.addMouseButton1PressedHandler(plugin::trample);
-
 		activeView = new JPanel();
 		activeView.setLayout(new BorderLayout());
 		activeView.add(timerPanel, BorderLayout.NORTH);
-		activeView.add(trampleButton, BorderLayout.CENTER);
 
 		inactiveView = new JPanel();
 		inactiveView.setLayout(new BorderLayout());
 		inactiveView.add(instructionLabel, BorderLayout.NORTH);
-		inactiveView.add(startButton, BorderLayout.CENTER);
 	}
 
 	public void setTime(int millis)
@@ -89,7 +84,7 @@ public class HunllefHelperPluginPanel extends PluginPanel
 		{
 			if (millis <= 9000000)
 			{
-				timeLabel.setText(String.format("%d", millis / 1000));
+				timeLabel.setText(String.format("%d", (millis + 1000) / 1000));
 			}
 			else
 			{
@@ -114,12 +109,18 @@ public class HunllefHelperPluginPanel extends PluginPanel
 	{
 		SwingUtilities.invokeLater(() ->
 		{
-			// Recreate the reset button in order to reset the styling. The styling
-			// messes up because the button is removed from the view on click. Because
-			// of this, some of the mouse events do not occur.
+			// Recreate the buttons in order to reset the styling. The styling
+			// messes up because the button is removed from the view on click.
+			// Because of this, some of the mouse events do not occur.
 			if (active)
 			{
+				createTrampleButton();
 				createResetButton();
+			}
+			else
+			{
+				createStartRangedButton();
+				createStartMageButton();
 			}
 
 			contentPanel.removeAll();
@@ -127,6 +128,46 @@ public class HunllefHelperPluginPanel extends PluginPanel
 			contentPanel.revalidate();
 			contentPanel.repaint();
 		});
+	}
+
+	private void createStartRangedButton()
+	{
+		if (startRangedButton != null)
+		{
+			inactiveView.remove(startRangedButton);
+		}
+
+		startRangedButton = new Button("Start");
+		startRangedButton.addMouseButton1PressedHandler(() -> plugin.start(true));
+
+		inactiveView.add(startRangedButton, BorderLayout.CENTER);
+	}
+
+	private void createStartMageButton()
+	{
+		if (startMageButton != null)
+		{
+			inactiveView.remove(startMageButton);
+		}
+
+		startMageButton = new Button("Start mage");
+		startMageButton.setPreferredSize(new Dimension(PANEL_WIDTH, 60));
+		startMageButton.addMouseButton1PressedHandler(() -> plugin.start(false));
+
+		inactiveView.add(startMageButton, BorderLayout.SOUTH);
+	}
+
+	private void createTrampleButton()
+	{
+		if (trampleButton != null)
+		{
+			activeView.remove(trampleButton);
+		}
+
+		trampleButton = new Button("I got trampled!");
+		trampleButton.addMouseButton1PressedHandler(plugin::trample);
+
+		activeView.add(trampleButton, BorderLayout.CENTER);
 	}
 
 	private void createResetButton()
