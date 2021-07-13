@@ -7,6 +7,8 @@ The Hunllef Helper is plugin that helps you beating The Gauntlet! The plugin cal
 ## Instructions
 The plugin automatically opens a RuneLite panel upon entering The (Corrupted) Gauntlet. Do your Gauntlet preparation and enter the bossroom. After the first Hunllef attack hits you, click the 'Start' button of the plugin. The plugin will now call out the attacks which you should pray against. Of course you will never get trampled, but if you do make sure to click the 'I got trampled!' button in the plugin.
 
+[![Instruction video](https://github.com/Loze-Put/hunllef-helper/blob/master/docs/img/video-thumbnail.png)](https://www.youtube.com/watch?v=Gjv9KWrCieY)
+
 ## Changes
 All changes to the plugin are tracked in the [changelog](https://github.com/Loze-Put/hunllef-helper/blob/master/CHANGELOG.md).
 
