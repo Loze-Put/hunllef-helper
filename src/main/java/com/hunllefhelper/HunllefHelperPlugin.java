@@ -252,6 +252,8 @@ public class HunllefHelperPlugin extends Plugin
 	{
 		if (clip != null)
 		{
+			clip.stop();
+			clip.flush();
 			clip.close();
 			clip = null;
 		}
@@ -261,7 +263,18 @@ public class HunllefHelperPlugin extends Plugin
 	{
 		if (executorService != null)
 		{
-			executorService.shutdown();
+			executorService.shutdownNow();
+			try
+			{
+				if (!executorService.awaitTermination(100, TimeUnit.MILLISECONDS))
+				{
+					log.warn("Executor service dit not shut down within the allocated timeout.");
+				}
+			}
+			catch (InterruptedException ex)
+			{
+				Thread.currentThread().interrupt();
+			}
 			executorService = null;
 		}
 	}
