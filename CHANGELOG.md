@@ -2,6 +2,10 @@
 All notable changes to this plugin will be documented in this file.
 
 ----------------------------------------------------------------------
+## [1.1.1] - 2021-07-14
+### Fixed
+- Fixed an issue where the plugin would freeze when resetting it while playing audio.
+
 ## [1.1.0] - 2021-07-11
 ### Added
 - Added the "Start mage" button to start the plugin on a mage rotation.
