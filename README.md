@@ -1,4 +1,4 @@
-# Hunllef Helper
+# Hunllef Helper [![](https://img.shields.io/endpoint?url=https://i.pluginhub.info/shields/installs/plugin/hunllef-helper)](https://runelite.net/plugin-hub/Loze-Put)
 The Hunllef Helper is plugin that helps you beating The Gauntlet! The plugin calls out the attack style of the Hunllef.
 
 | NOTE: This plugin does not use any game state information about The Gauntlet. User input is required to make the plugin function correctly. |

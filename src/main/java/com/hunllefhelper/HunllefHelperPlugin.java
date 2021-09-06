@@ -144,7 +144,6 @@ public class HunllefHelperPlugin extends Plugin
 	public void reset()
 	{
 		shutdownExecutorService();
-		closeClip();
 		panel.setCounterActiveState(false);
 	}
 
@@ -197,8 +196,8 @@ public class HunllefHelperPlugin extends Plugin
 		}
 
 		try (InputStream audioSource = getClass().getResourceAsStream(soundFile);
-			 BufferedInputStream bufferedStream = new BufferedInputStream(audioSource);
-			 AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(bufferedStream))
+				BufferedInputStream bufferedStream = new BufferedInputStream(audioSource);
+				AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(bufferedStream))
 		{
 			closeClip();
 			clip = AudioSystem.getClip();
