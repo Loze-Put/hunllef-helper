@@ -2,6 +2,10 @@
 All notable changes to this plugin will be documented in this file.
 
 ----------------------------------------------------------------------
+## [1.1.2] - 2021-09-06
+### Fixed
+- Fixed another rare occasion where the plugin would freeze when resetting.
+
 ## [1.1.1] - 2021-07-14
 ### Fixed
 - Fixed an issue where the plugin would freeze when resetting it while playing audio.
