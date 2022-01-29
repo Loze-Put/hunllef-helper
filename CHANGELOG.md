@@ -2,6 +2,12 @@
 All notable changes to this plugin will be documented in this file.
 
 ----------------------------------------------------------------------
+## [1.2.0] - 2022-01-30
+### Added
+- Added the ability to play custom audio.
+### Fixed
+- Fixed an issue causing a drop in framerates when playing audio.
+
 ## [1.1.2] - 2021-09-06
 ### Fixed
 - Fixed another rare occasion where the plugin would freeze when resetting.

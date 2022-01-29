@@ -1,6 +1,7 @@
 package com.hunllefhelper;
 
 import com.google.inject.Provides;
+
 import static com.hunllefhelper.PluginConstants.ATTACK_DURATION;
 import static com.hunllefhelper.PluginConstants.COUNTER_INTERVAL;
 import static com.hunllefhelper.PluginConstants.INITIAL_COUNTER;
@@ -10,21 +11,16 @@ import static com.hunllefhelper.PluginConstants.SOUND_MAGE;
 import static com.hunllefhelper.PluginConstants.SOUND_ONE;
 import static com.hunllefhelper.PluginConstants.SOUND_RANGE;
 import static com.hunllefhelper.PluginConstants.SOUND_TWO;
+
 import com.hunllefhelper.ui.HunllefHelperPluginPanel;
+
 import java.awt.Color;
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
-import javax.sound.sampled.LineUnavailableException;
-import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.SwingUtilities;
+
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.Player;
@@ -41,240 +37,192 @@ import net.runelite.client.util.ImageUtil;
 
 @Slf4j
 @PluginDescriptor(
-	name = "Hunllef Helper"
+        name = "Hunllef Helper"
 )
-public class HunllefHelperPlugin extends Plugin
-{
-	@Inject
-	private Client client;
+public class HunllefHelperPlugin extends Plugin {
+    @Inject
+    private Client client;
 
-	@Inject
-	private ClientToolbar clientToolbar;
+    @Inject
+    private ClientToolbar clientToolbar;
 
-	@Inject
-	private HunllefHelperConfig config;
+    @Inject
+    private HunllefHelperConfig config;
 
-	private HunllefHelperPluginPanel panel;
+    @Inject
+    private AudioPlayer audioPlayer;
 
-	private ScheduledExecutorService executorService;
-	private Clip clip;
+    private HunllefHelperPluginPanel panel;
 
-	private int counter;
-	private boolean isRanged;
-	private boolean wasInInstance;
+    private ScheduledExecutorService executorService;
 
-	private NavigationButton navigationButton;
+    private int counter;
+    private boolean isRanged;
+    private boolean wasInInstance;
+    private AudioMode audioMode;
 
-	@Override
-	protected void startUp() throws Exception
-	{
-		panel = injector.getInstance(HunllefHelperPluginPanel.class);
+    private NavigationButton navigationButton;
 
-		navigationButton = NavigationButton
-			.builder()
-			.tooltip("Hunllef Helper")
-			.icon(ImageUtil.loadImageResource(getClass(), "/nav-icon.png"))
-			.priority(100)
-			.panel(panel)
-			.build();
+    @Override
+    protected void startUp() throws Exception {
+        audioPlayer.tryLoadAudio(config, new String[]{SOUND_MAGE, SOUND_RANGE, SOUND_ONE, SOUND_TWO});
+        audioMode = config.audioMode();
 
-		panel.setCounterActiveState(false);
+        panel = injector.getInstance(HunllefHelperPluginPanel.class);
 
-		wasInInstance = isInTheGauntlet();
-		updateNavigationBar((!config.autoHide() || wasInInstance), false);
-	}
+        navigationButton = NavigationButton
+                .builder()
+                .tooltip("Hunllef Helper")
+                .icon(ImageUtil.loadImageResource(getClass(), "/nav-icon.png"))
+                .priority(100)
+                .panel(panel)
+                .build();
 
-	@Override
-	protected void shutDown() throws Exception
-	{
-		updateNavigationBar(false, false);
-		shutdownExecutorService();
-		panel = null;
-		navigationButton = null;
-		closeClip();
-	}
+        panel.setCounterActiveState(false);
 
-	@Subscribe
-	public void onGameTick(GameTick tick)
-	{
-		if (!config.autoHide())
-		{
-			return;
-		}
+        wasInInstance = isInTheGauntlet();
+        updateNavigationBar((!config.autoHide() || wasInInstance), false);
+    }
 
-		boolean isInInstance = isInTheGauntlet();
-		if (isInInstance != wasInInstance)
-		{
-			updateNavigationBar(isInInstance, true);
-			wasInInstance = isInInstance;
-		}
-	}
+    @Override
+    protected void shutDown() throws Exception {
+        updateNavigationBar(false, false);
+        shutdownExecutorService();
+        panel = null;
+        navigationButton = null;
+        audioPlayer.unloadAudio();
+    }
 
-	@Subscribe
-	public void onConfigChanged(ConfigChanged event)
-	{
-		wasInInstance = isInTheGauntlet();
-		updateNavigationBar((!config.autoHide() || wasInInstance), false);
-	}
+    @Subscribe
+    public void onGameTick(GameTick tick) {
+        if (!config.autoHide()) {
+            return;
+        }
 
-	public void start(boolean withRanged)
-	{
-		isRanged = withRanged;
+        boolean isInInstance = isInTheGauntlet();
+        if (isInInstance != wasInInstance) {
+            updateNavigationBar(isInInstance, true);
+            wasInInstance = isInInstance;
+        }
+    }
 
-		if (withRanged)
-		{
-			panel.setStyle("Ranged", Color.GREEN);
-		}
-		else
-		{
-			panel.setStyle("Mage", Color.CYAN);
-		}
-		panel.setCounterActiveState(true);
-		counter = INITIAL_COUNTER;
+    @Subscribe
+    public void onConfigChanged(ConfigChanged event) {
+        wasInInstance = isInTheGauntlet();
+        updateNavigationBar((!config.autoHide() || wasInInstance), false);
 
-		executorService = Executors.newSingleThreadScheduledExecutor();
-		executorService.scheduleAtFixedRate(this::tickCounter, 0, COUNTER_INTERVAL, TimeUnit.MILLISECONDS);
-	}
+        if (audioMode != config.audioMode()) {
+            reset();
+            audioPlayer.unloadAudio();
+            audioPlayer.tryLoadAudio(config, new String[]{SOUND_MAGE, SOUND_RANGE, SOUND_ONE, SOUND_TWO});
+        }
+    }
 
-	public void trample()
-	{
-		counter += ATTACK_DURATION;
-	}
+    public void start(boolean withRanged) {
+        isRanged = withRanged;
 
-	public void reset()
-	{
-		shutdownExecutorService();
-		panel.setCounterActiveState(false);
-	}
+        if (withRanged) {
+            panel.setStyle("Ranged", Color.GREEN);
+        } else {
+            panel.setStyle("Mage", Color.CYAN);
+        }
+        panel.setCounterActiveState(true);
+        counter = INITIAL_COUNTER;
 
-	@Provides
-	HunllefHelperConfig provideConfig(ConfigManager configManager)
-	{
-		return configManager.getConfig(HunllefHelperConfig.class);
-	}
+        executorService = Executors.newSingleThreadScheduledExecutor();
+        executorService.scheduleAtFixedRate(this::tickCounter, 0, COUNTER_INTERVAL, TimeUnit.MILLISECONDS);
+    }
 
-	private void tickCounter()
-	{
-		counter -= COUNTER_INTERVAL;
-		panel.setTime(counter);
+    public void trample() {
+        counter += ATTACK_DURATION;
+    }
 
-		if (counter == 2000)
-		{
-			playSoundClip(SOUND_TWO);
-			return;
-		}
+    public void reset() {
+        shutdownExecutorService();
+        panel.setCounterActiveState(false);
+    }
 
-		if (counter == 1000)
-		{
-			playSoundClip(SOUND_ONE);
-			return;
-		}
+    @Provides
+    HunllefHelperConfig provideConfig(ConfigManager configManager) {
+        return configManager.getConfig(HunllefHelperConfig.class);
+    }
 
-		if (counter <= 0)
-		{
-			if (isRanged)
-			{
-				playSoundClip(SOUND_MAGE);
-				panel.setStyle("Mage", Color.CYAN);
-			}
-			else
-			{
-				playSoundClip(SOUND_RANGE);
-				panel.setStyle("Ranged", Color.GREEN);
-			}
+    private void tickCounter() {
+        counter -= COUNTER_INTERVAL;
+        panel.setTime(counter);
 
-			isRanged = !isRanged;
-			counter = ROTATION_DURATION;
-		}
-	}
+        if (counter == 2000) {
+            playSoundClip(SOUND_TWO);
+            return;
+        }
 
-	private void playSoundClip(String soundFile)
-	{
-		if (config.mute())
-		{
-			return;
-		}
+        if (counter == 1000) {
+            playSoundClip(SOUND_ONE);
+            return;
+        }
 
-		try (InputStream audioSource = getClass().getResourceAsStream(soundFile);
-				BufferedInputStream bufferedStream = new BufferedInputStream(audioSource);
-				AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(bufferedStream))
-		{
-			closeClip();
-			clip = AudioSystem.getClip();
-			clip.open(audioInputStream);
-			clip.start();
-		}
-		catch (UnsupportedAudioFileException | IOException | LineUnavailableException | SecurityException ex)
-		{
-			log.error("Could not play audio", ex);
-		}
-	}
+        if (counter <= 0) {
+            if (isRanged) {
+                playSoundClip(SOUND_MAGE);
+                panel.setStyle("Mage", Color.CYAN);
+            } else {
+                playSoundClip(SOUND_RANGE);
+                panel.setStyle("Ranged", Color.GREEN);
+            }
 
-	private boolean isInTheGauntlet()
-	{
-		Player player = client.getLocalPlayer();
+            isRanged = !isRanged;
+            counter = ROTATION_DURATION;
+        }
+    }
 
-		if (player == null)
-		{
-			return false;
-		}
+    private void playSoundClip(String soundFile) {
+        if (config.audioMode() == AudioMode.Disabled) {
+            return;
+        }
 
-		int regionId = WorldPoint.fromLocalInstance(client, player.getLocalLocation()).getRegionID();
-		return REGION_IDS_GAUNTLET.contains(regionId);
-	}
+        audioPlayer.playSoundClip(soundFile);
+    }
 
-	private void updateNavigationBar(boolean enable, boolean selectPanel)
-	{
-		if (enable)
-		{
-			clientToolbar.addNavigation(navigationButton);
-			if (selectPanel)
-			{
-				SwingUtilities.invokeLater(() ->
-				{
-					if (!navigationButton.isSelected())
-					{
-						navigationButton.getOnSelect().run();
-					}
-				});
-			}
-		}
-		else
-		{
-			reset();
-			navigationButton.setSelected(false);
-			clientToolbar.removeNavigation(navigationButton);
-		}
-	}
+    private boolean isInTheGauntlet() {
+        Player player = client.getLocalPlayer();
 
-	private void closeClip()
-	{
-		if (clip != null)
-		{
-			clip.stop();
-			clip.flush();
-			clip.close();
-			clip = null;
-		}
-	}
+        if (player == null) {
+            return false;
+        }
 
-	private void shutdownExecutorService()
-	{
-		if (executorService != null)
-		{
-			executorService.shutdownNow();
-			try
-			{
-				if (!executorService.awaitTermination(100, TimeUnit.MILLISECONDS))
-				{
-					log.warn("Executor service dit not shut down within the allocated timeout.");
-				}
-			}
-			catch (InterruptedException ex)
-			{
-				Thread.currentThread().interrupt();
-			}
-			executorService = null;
-		}
-	}
+        int regionId = WorldPoint.fromLocalInstance(client, player.getLocalLocation()).getRegionID();
+        return REGION_IDS_GAUNTLET.contains(regionId);
+    }
+
+    private void updateNavigationBar(boolean enable, boolean selectPanel) {
+        if (enable) {
+            clientToolbar.addNavigation(navigationButton);
+            if (selectPanel) {
+                SwingUtilities.invokeLater(() ->
+                {
+                    if (!navigationButton.isSelected()) {
+                        navigationButton.getOnSelect().run();
+                    }
+                });
+            }
+        } else {
+            reset();
+            navigationButton.setSelected(false);
+            clientToolbar.removeNavigation(navigationButton);
+        }
+    }
+
+    private void shutdownExecutorService() {
+        if (executorService != null) {
+            executorService.shutdownNow();
+            try {
+                if (!executorService.awaitTermination(100, TimeUnit.MILLISECONDS)) {
+                    log.warn("Executor service dit not shut down within the allocated timeout.");
+                }
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+            }
+            executorService = null;
+        }
+    }
 }
