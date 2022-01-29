@@ -9,6 +9,14 @@ The plugin automatically opens a RuneLite panel upon entering The (Corrupted) Ga
 
 [![Instruction video](docs/img/video-thumbnail.png)](https://www.youtube.com/watch?v=Gjv9KWrCieY)
 
+### Custom audio
+You can configure the plugin to play your own sound files! Follow these steps to configure your custom sounds:
+1. Create a folder "audio" in your .runelite folder.
+2. Place your audio files in the created audio folder. Note that the audio files must be a .wav format and must not be longer than one second. 
+3. Rename your files to exactly match the names: "mage.wav", "range.wav", "one.wav" and "two.wav".
+4. Change the audio mode in the plugin configuration to "Custom".
+5. Turn the plugin off and on again. This loads your files into the plugin.
+
 ## Changes
 All changes to the plugin are tracked in the [changelog](https://github.com/Loze-Put/hunllef-helper/blob/master/CHANGELOG.md).
 
