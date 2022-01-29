@@ -24,7 +24,7 @@ dependencies {
 }
 
 group = 'com.hunllefhelper'
-version = '1.1.2'
+version = '1.2.0'
 sourceCompatibility = '1.8'
 
 tasks.withType(JavaCompile) {
