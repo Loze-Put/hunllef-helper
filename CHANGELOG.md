@@ -2,6 +2,10 @@
 All notable changes to this plugin will be documented in this file.
 
 ----------------------------------------------------------------------
+## [1.2.1] - 2022-02-08
+### Fixed
+- Attempt to fix an issue with audio not playing.
+
 ## [1.2.0] - 2022-01-30
 ### Added
 - Added the ability to play custom audio.

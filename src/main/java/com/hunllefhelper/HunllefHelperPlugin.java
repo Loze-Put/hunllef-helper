@@ -112,9 +112,9 @@ public class HunllefHelperPlugin extends Plugin {
         updateNavigationBar((!config.autoHide() || wasInInstance), false);
 
         if (audioMode != config.audioMode()) {
-            reset();
             audioPlayer.unloadAudio();
             audioPlayer.tryLoadAudio(config, new String[]{SOUND_MAGE, SOUND_RANGE, SOUND_ONE, SOUND_TWO});
+            audioMode = config.audioMode();
         }
     }
 
@@ -180,7 +180,7 @@ public class HunllefHelperPlugin extends Plugin {
             return;
         }
 
-        audioPlayer.playSoundClip(soundFile);
+        executorService.submit(() -> audioPlayer.playSoundClip(soundFile));
     }
 
     private boolean isInTheGauntlet() {

@@ -28,9 +28,14 @@ public class AudioPlayer {
         clips.clear();
     }
 
-    public void playSoundClip(String sound) {
+    public synchronized void playSoundClip(String sound) {
         if (clips.containsKey(sound)) {
-            clips.get(sound).loop(1);
+            Clip clip = clips.get(sound);
+            if (clip.getFramePosition() == 0) {
+                clip.start();
+            } else {
+                clip.loop(1);
+            }
         }
     }
 
@@ -43,7 +48,6 @@ public class AudioPlayer {
                 Clip clip = AudioSystem.getClip();
                 clips.put(clipName, clip);
                 clip.open(sound);
-                clip.setFramePosition(clip.getFrameLength());
                 return true;
             } catch (UnsupportedAudioFileException | IOException | LineUnavailableException | SecurityException ex) {
                 log.error("Unable to load sound " + clipName, ex);
@@ -57,7 +61,6 @@ public class AudioPlayer {
             Clip clip = AudioSystem.getClip();
             clips.put(clipName, clip);
             clip.open(audioInputStream);
-            clip.setFramePosition(clip.getFrameLength());
             return true;
         } catch (UnsupportedAudioFileException | IOException | LineUnavailableException | SecurityException ex) {
             log.error("Unable to load sound " + clipName, ex);
