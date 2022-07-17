@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.swing.SwingUtilities;
 
+import com.hunllefhelper.ui.overlays.HunllefHelperPrayerOverlay;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.Player;
@@ -29,10 +30,13 @@ import net.runelite.api.events.GameTick;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
+import net.runelite.client.input.KeyManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
+import net.runelite.client.ui.overlay.OverlayManager;
+import net.runelite.client.util.HotkeyListener;
 import net.runelite.client.util.ImageUtil;
 
 @Slf4j
@@ -51,13 +55,17 @@ public class HunllefHelperPlugin extends Plugin {
 
     @Inject
     private AudioPlayer audioPlayer;
-
+    @Inject
+    KeyManager keyManager;
+    @Inject
+    OverlayManager overlayManager;
+    HunllefHelperPrayerOverlay prayerOverlay;
     private HunllefHelperPluginPanel panel;
 
     private ScheduledExecutorService executorService;
 
     private int counter;
-    private boolean isRanged;
+    private boolean isRanged = true;
     private boolean wasInInstance;
     private AudioMode audioMode;
 
@@ -65,11 +73,11 @@ public class HunllefHelperPlugin extends Plugin {
 
     @Override
     protected void startUp() throws Exception {
+        prayerOverlay = new HunllefHelperPrayerOverlay(this,client);
+        overlayManager.add(prayerOverlay);
         audioPlayer.tryLoadAudio(config, new String[]{SOUND_MAGE, SOUND_RANGE, SOUND_ONE, SOUND_TWO});
         audioMode = config.audioMode();
-
         panel = injector.getInstance(HunllefHelperPluginPanel.class);
-
         navigationButton = NavigationButton
                 .builder()
                 .tooltip("Hunllef Helper")
@@ -79,7 +87,7 @@ public class HunllefHelperPlugin extends Plugin {
                 .build();
 
         panel.setCounterActiveState(false);
-
+        keyManager.registerKeyListener(stompKey);
         wasInInstance = isInTheGauntlet();
         updateNavigationBar((!config.autoHide() || wasInInstance), false);
     }
@@ -91,6 +99,11 @@ public class HunllefHelperPlugin extends Plugin {
         panel = null;
         navigationButton = null;
         audioPlayer.unloadAudio();
+        keyManager.unregisterKeyListener(stompKey);
+        overlayManager.remove(prayerOverlay);
+    }
+    public HunllefHelperConfig getConfig() {
+        return config;
     }
 
     @Subscribe
@@ -183,7 +196,7 @@ public class HunllefHelperPlugin extends Plugin {
         executorService.submit(() -> audioPlayer.playSoundClip(soundFile));
     }
 
-    private boolean isInTheGauntlet() {
+    public boolean isInTheGauntlet() {
         Player player = client.getLocalPlayer();
 
         if (player == null) {
@@ -211,6 +224,9 @@ public class HunllefHelperPlugin extends Plugin {
             clientToolbar.removeNavigation(navigationButton);
         }
     }
+    public boolean isRanged() {
+        return isRanged;
+    }
 
     private void shutdownExecutorService() {
         if (executorService != null) {
@@ -225,4 +241,12 @@ public class HunllefHelperPlugin extends Plugin {
             executorService = null;
         }
     }
+    private final HotkeyListener stompKey = new HotkeyListener(() -> config.stompKey())
+    {
+        @Override
+        public void hotkeyPressed()
+        {
+            trample();
+        }
+    };
 }
