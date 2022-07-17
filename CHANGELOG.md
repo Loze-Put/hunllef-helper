@@ -2,6 +2,11 @@
 All notable changes to this plugin will be documented in this file.
 
 ----------------------------------------------------------------------
+## [1.2.2] - 2022-07-16
+### Added
+- Ability to have the plugins existing range/mage information appear over their respective prayers
+- Ability to use a hotkey to add stomp timer
+
 ## [1.2.1] - 2022-02-08
 ### Fixed
 - Attempt to fix an issue with audio not playing.
