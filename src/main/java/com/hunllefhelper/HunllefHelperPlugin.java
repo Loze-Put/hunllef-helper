@@ -37,192 +37,230 @@ import net.runelite.client.util.ImageUtil;
 
 @Slf4j
 @PluginDescriptor(
-        name = "Hunllef Helper"
+	name = "Hunllef Helper"
 )
-public class HunllefHelperPlugin extends Plugin {
-    @Inject
-    private Client client;
+public class HunllefHelperPlugin extends Plugin
+{
+	@Inject
+	private Client client;
 
-    @Inject
-    private ClientToolbar clientToolbar;
+	@Inject
+	private ClientToolbar clientToolbar;
 
-    @Inject
-    private HunllefHelperConfig config;
+	@Inject
+	private HunllefHelperConfig config;
 
-    @Inject
-    private AudioPlayer audioPlayer;
+	@Inject
+	private AudioPlayer audioPlayer;
 
-    private HunllefHelperPluginPanel panel;
+	private HunllefHelperPluginPanel panel;
 
-    private ScheduledExecutorService executorService;
+	private ScheduledExecutorService executorService;
 
-    private int counter;
-    private boolean isRanged;
-    private boolean wasInInstance;
-    private AudioMode audioMode;
+	private int counter;
+	private boolean isRanged;
+	private boolean wasInInstance;
+	private AudioMode audioMode;
 
-    private NavigationButton navigationButton;
+	private NavigationButton navigationButton;
 
-    @Override
-    protected void startUp() throws Exception {
-        audioPlayer.tryLoadAudio(config, new String[]{SOUND_MAGE, SOUND_RANGE, SOUND_ONE, SOUND_TWO});
-        audioMode = config.audioMode();
+	@Override
+	protected void startUp() throws Exception
+	{
+		audioPlayer.tryLoadAudio(config, new String[]{SOUND_MAGE, SOUND_RANGE, SOUND_ONE, SOUND_TWO});
+		audioMode = config.audioMode();
 
-        panel = injector.getInstance(HunllefHelperPluginPanel.class);
+		panel = injector.getInstance(HunllefHelperPluginPanel.class);
 
-        navigationButton = NavigationButton
-                .builder()
-                .tooltip("Hunllef Helper")
-                .icon(ImageUtil.loadImageResource(getClass(), "/nav-icon.png"))
-                .priority(100)
-                .panel(panel)
-                .build();
+		navigationButton = NavigationButton
+			.builder()
+			.tooltip("Hunllef Helper")
+			.icon(ImageUtil.loadImageResource(getClass(), "/nav-icon.png"))
+			.priority(100)
+			.panel(panel)
+			.build();
 
-        panel.setCounterActiveState(false);
+		panel.setCounterActiveState(false);
 
-        wasInInstance = isInTheGauntlet();
-        updateNavigationBar((!config.autoHide() || wasInInstance), false);
-    }
+		wasInInstance = isInTheGauntlet();
+		updateNavigationBar((!config.autoHide() || wasInInstance), false);
+	}
 
-    @Override
-    protected void shutDown() throws Exception {
-        updateNavigationBar(false, false);
-        shutdownExecutorService();
-        panel = null;
-        navigationButton = null;
-        audioPlayer.unloadAudio();
-    }
+	@Override
+	protected void shutDown() throws Exception
+	{
+		updateNavigationBar(false, false);
+		shutdownExecutorService();
+		panel = null;
+		navigationButton = null;
+		audioPlayer.unloadAudio();
+	}
 
-    @Subscribe
-    public void onGameTick(GameTick tick) {
-        if (!config.autoHide()) {
-            return;
-        }
+	@Subscribe
+	public void onGameTick(GameTick tick)
+	{
+		if (!config.autoHide())
+		{
+			return;
+		}
 
-        boolean isInInstance = isInTheGauntlet();
-        if (isInInstance != wasInInstance) {
-            updateNavigationBar(isInInstance, true);
-            wasInInstance = isInInstance;
-        }
-    }
+		boolean isInInstance = isInTheGauntlet();
+		if (isInInstance != wasInInstance)
+		{
+			updateNavigationBar(isInInstance, true);
+			wasInInstance = isInInstance;
+		}
+	}
 
-    @Subscribe
-    public void onConfigChanged(ConfigChanged event) {
-        wasInInstance = isInTheGauntlet();
-        updateNavigationBar((!config.autoHide() || wasInInstance), false);
+	@Subscribe
+	public void onConfigChanged(ConfigChanged event)
+	{
+		wasInInstance = isInTheGauntlet();
+		updateNavigationBar((!config.autoHide() || wasInInstance), false);
 
-        if (audioMode != config.audioMode()) {
-            audioPlayer.unloadAudio();
-            audioPlayer.tryLoadAudio(config, new String[]{SOUND_MAGE, SOUND_RANGE, SOUND_ONE, SOUND_TWO});
-            audioMode = config.audioMode();
-        }
-    }
+		if (audioMode != config.audioMode())
+		{
+			audioPlayer.unloadAudio();
+			audioPlayer.tryLoadAudio(config, new String[]{SOUND_MAGE, SOUND_RANGE, SOUND_ONE, SOUND_TWO});
+			audioMode = config.audioMode();
+		}
+	}
 
-    public void start(boolean withRanged) {
-        isRanged = withRanged;
+	public void start(boolean withRanged)
+	{
+		isRanged = withRanged;
 
-        if (withRanged) {
-            panel.setStyle("Ranged", Color.GREEN);
-        } else {
-            panel.setStyle("Mage", Color.CYAN);
-        }
-        panel.setCounterActiveState(true);
-        counter = INITIAL_COUNTER;
+		if (withRanged)
+		{
+			panel.setStyle("Ranged", Color.GREEN);
+		}
+		else
+		{
+			panel.setStyle("Mage", Color.CYAN);
+		}
+		panel.setCounterActiveState(true);
+		counter = INITIAL_COUNTER;
 
-        executorService = Executors.newSingleThreadScheduledExecutor();
-        executorService.scheduleAtFixedRate(this::tickCounter, 0, COUNTER_INTERVAL, TimeUnit.MILLISECONDS);
-    }
+		executorService = Executors.newSingleThreadScheduledExecutor();
+		executorService.scheduleAtFixedRate(this::tickCounter, 0, COUNTER_INTERVAL, TimeUnit.MILLISECONDS);
+	}
 
-    public void trample() {
-        counter += ATTACK_DURATION;
-    }
+	public void trample()
+	{
+		counter += ATTACK_DURATION;
+	}
 
-    public void reset() {
-        shutdownExecutorService();
-        panel.setCounterActiveState(false);
-    }
+	public void reset()
+	{
+		shutdownExecutorService();
+		panel.setCounterActiveState(false);
+	}
 
-    @Provides
-    HunllefHelperConfig provideConfig(ConfigManager configManager) {
-        return configManager.getConfig(HunllefHelperConfig.class);
-    }
+	@Provides
+	HunllefHelperConfig provideConfig(ConfigManager configManager)
+	{
+		return configManager.getConfig(HunllefHelperConfig.class);
+	}
 
-    private void tickCounter() {
-        counter -= COUNTER_INTERVAL;
-        panel.setTime(counter);
+	private void tickCounter()
+	{
+		counter -= COUNTER_INTERVAL;
+		panel.setTime(counter);
 
-        if (counter == 2000) {
-            playSoundClip(SOUND_TWO);
-            return;
-        }
+		if (counter == 2000)
+		{
+			playSoundClip(SOUND_TWO);
+			return;
+		}
 
-        if (counter == 1000) {
-            playSoundClip(SOUND_ONE);
-            return;
-        }
+		if (counter == 1000)
+		{
+			playSoundClip(SOUND_ONE);
+			return;
+		}
 
-        if (counter <= 0) {
-            if (isRanged) {
-                playSoundClip(SOUND_MAGE);
-                panel.setStyle("Mage", Color.CYAN);
-            } else {
-                playSoundClip(SOUND_RANGE);
-                panel.setStyle("Ranged", Color.GREEN);
-            }
+		if (counter <= 0)
+		{
+			if (isRanged)
+			{
+				playSoundClip(SOUND_MAGE);
+				panel.setStyle("Mage", Color.CYAN);
+			}
+			else
+			{
+				playSoundClip(SOUND_RANGE);
+				panel.setStyle("Ranged", Color.GREEN);
+			}
 
-            isRanged = !isRanged;
-            counter = ROTATION_DURATION;
-        }
-    }
+			isRanged = !isRanged;
+			counter = ROTATION_DURATION;
+		}
+	}
 
-    private void playSoundClip(String soundFile) {
-        if (config.audioMode() == AudioMode.Disabled) {
-            return;
-        }
+	private void playSoundClip(String soundFile)
+	{
+		if (config.audioMode() == AudioMode.Disabled)
+		{
+			return;
+		}
 
-        executorService.submit(() -> audioPlayer.playSoundClip(soundFile));
-    }
+		executorService.submit(() -> audioPlayer.playSoundClip(soundFile));
+	}
 
-    private boolean isInTheGauntlet() {
-        Player player = client.getLocalPlayer();
+	private boolean isInTheGauntlet()
+	{
+		Player player = client.getLocalPlayer();
 
-        if (player == null) {
-            return false;
-        }
+		if (player == null)
+		{
+			return false;
+		}
 
-        int regionId = WorldPoint.fromLocalInstance(client, player.getLocalLocation()).getRegionID();
-        return REGION_IDS_GAUNTLET.contains(regionId);
-    }
+		int regionId = WorldPoint.fromLocalInstance(client, player.getLocalLocation()).getRegionID();
+		return REGION_IDS_GAUNTLET.contains(regionId);
+	}
 
-    private void updateNavigationBar(boolean enable, boolean selectPanel) {
-        if (enable) {
-            clientToolbar.addNavigation(navigationButton);
-            if (selectPanel) {
-                SwingUtilities.invokeLater(() ->
-                {
-                    if (!navigationButton.isSelected()) {
-                        navigationButton.getOnSelect().run();
-                    }
-                });
-            }
-        } else {
-            reset();
-            navigationButton.setSelected(false);
-            clientToolbar.removeNavigation(navigationButton);
-        }
-    }
+	private void updateNavigationBar(boolean enable, boolean selectPanel)
+	{
+		if (enable)
+		{
+			clientToolbar.addNavigation(navigationButton);
+			if (selectPanel)
+			{
+				SwingUtilities.invokeLater(() ->
+				{
+					if (!navigationButton.isSelected())
+					{
+						navigationButton.getOnSelect().run();
+					}
+				});
+			}
+		}
+		else
+		{
+			reset();
+			navigationButton.setSelected(false);
+			clientToolbar.removeNavigation(navigationButton);
+		}
+	}
 
-    private void shutdownExecutorService() {
-        if (executorService != null) {
-            executorService.shutdownNow();
-            try {
-                if (!executorService.awaitTermination(100, TimeUnit.MILLISECONDS)) {
-                    log.warn("Executor service dit not shut down within the allocated timeout.");
-                }
-            } catch (InterruptedException ex) {
-                Thread.currentThread().interrupt();
-            }
-            executorService = null;
-        }
-    }
+	private void shutdownExecutorService()
+	{
+		if (executorService != null)
+		{
+			executorService.shutdownNow();
+			try
+			{
+				if (!executorService.awaitTermination(100, TimeUnit.MILLISECONDS))
+				{
+					log.warn("Executor service dit not shut down within the allocated timeout.");
+				}
+			}
+			catch (InterruptedException ex)
+			{
+				Thread.currentThread().interrupt();
+			}
+			executorService = null;
+		}
+	}
 }
