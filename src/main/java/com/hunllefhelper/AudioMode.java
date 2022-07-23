@@ -1,7 +1,8 @@
 package com.hunllefhelper;
 
-public enum AudioMode {
-    Default,
-    Disabled,
-    Custom
+public enum AudioMode
+{
+	Default,
+	Disabled,
+	Custom
 }
