@@ -39,7 +39,7 @@ public class AudioPlayer
 		{
 			Clip clip = clips.get(sound);
 			clip.setFramePosition(0);
-			clip.loop(1);
+			clip.start();
 		}
 	}
 
