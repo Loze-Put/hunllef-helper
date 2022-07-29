@@ -38,14 +38,8 @@ public class AudioPlayer
 		if (clips.containsKey(sound))
 		{
 			Clip clip = clips.get(sound);
-			if (clip.getFramePosition() == 0)
-			{
-				clip.start();
-			}
-			else
-			{
-				clip.loop(1);
-			}
+			clip.setFramePosition(0);
+			clip.start();
 		}
 	}
 
