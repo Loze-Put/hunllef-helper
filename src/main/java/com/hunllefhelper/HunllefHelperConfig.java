@@ -19,6 +19,17 @@ public interface HunllefHelperConfig extends Config
 	}
 
 	@ConfigItem(
+			position = 1,
+			keyName = "onlyShowAtHunllef",
+			name = "Display only at Hunllef",
+			description = "If checked, only show the plugin panel when in the Hunllef fight"
+	)
+	default boolean onlyShowAtHunllef()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		position = 2,
 		keyName = "audioMode",
 		name = "Audio Mode",

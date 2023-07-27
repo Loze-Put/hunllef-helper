@@ -2,16 +2,6 @@ package com.hunllefhelper;
 
 import com.google.inject.Provides;
 
-import static com.hunllefhelper.PluginConstants.ATTACK_DURATION;
-import static com.hunllefhelper.PluginConstants.COUNTER_INTERVAL;
-import static com.hunllefhelper.PluginConstants.INITIAL_COUNTER;
-import static com.hunllefhelper.PluginConstants.REGION_IDS_GAUNTLET;
-import static com.hunllefhelper.PluginConstants.ROTATION_DURATION;
-import static com.hunllefhelper.PluginConstants.SOUND_MAGE;
-import static com.hunllefhelper.PluginConstants.SOUND_ONE;
-import static com.hunllefhelper.PluginConstants.SOUND_RANGE;
-import static com.hunllefhelper.PluginConstants.SOUND_TWO;
-
 import com.hunllefhelper.ui.HunllefHelperPluginPanel;
 
 import java.awt.Color;
@@ -34,6 +24,8 @@ import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.util.ImageUtil;
+
+import static com.hunllefhelper.PluginConstants.*;
 
 @Slf4j
 @PluginDescriptor(
@@ -104,7 +96,7 @@ public class HunllefHelperPlugin extends Plugin
 			return;
 		}
 
-		boolean isInInstance = isInTheGauntlet();
+		boolean isInInstance = config.onlyShowAtHunllef() ? isInHunllefRoom() : isInTheGauntlet();
 		if (isInInstance != wasInInstance)
 		{
 			updateNavigationBar(isInInstance, true);
@@ -206,7 +198,6 @@ public class HunllefHelperPlugin extends Plugin
 
 		executorService.submit(() -> audioPlayer.playSoundClip(soundFile));
 	}
-
 	private boolean isInTheGauntlet()
 	{
 		Player player = client.getLocalPlayer();
@@ -218,6 +209,27 @@ public class HunllefHelperPlugin extends Plugin
 
 		int regionId = WorldPoint.fromLocalInstance(client, player.getLocalLocation()).getRegionID();
 		return REGION_IDS_GAUNTLET.contains(regionId);
+	}
+
+	private boolean isInHunllefRoom()
+	{
+		Player player = client.getLocalPlayer();
+
+		if (player == null)
+		{
+			return false;
+		}
+
+		WorldPoint playerLocation = WorldPoint.fromLocalInstance(client, player.getLocalLocation());
+		int regionId = playerLocation.getRegionID();
+		if (regionId == REGION_ID_GAUNTLET_NORMAL || regionId == REGION_ID_GAUNTLET_CORRUPTED) {
+			int playerX = playerLocation.getRegionX();
+			int playerY = playerLocation.getRegionY();
+            return playerX >= HUNLLEF_ROOM_X_MIN && playerX <= HUNLLEF_ROOM_X_MAX
+                    && playerY >= HUNLLEF_ROOM_Y_MIN && playerY <= HUNLLEF_ROOM_Y_MAX;
+		}
+
+		return false;
 	}
 
 	private void updateNavigationBar(boolean enable, boolean selectPanel)
