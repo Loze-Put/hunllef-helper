@@ -1,5 +1,7 @@
 package com.hunllefhelper;
 
+import com.hunllefhelper.config.AudioMode;
+import com.hunllefhelper.config.VisibilityMode;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
@@ -9,24 +11,13 @@ public interface HunllefHelperConfig extends Config
 {
 	@ConfigItem(
 		position = 1,
-		keyName = "autoHide",
-		name = "Automatically hide",
-		description = "If checked, only show the plugin panel inside The Gauntlet"
+		keyName = "visibilityMode",
+		name = "Visibility Mode",
+		description = "Determines when the plugin panel is shown."
 	)
-	default boolean autoHide()
+	default VisibilityMode visibilityMode()
 	{
-		return true;
-	}
-
-	@ConfigItem(
-			position = 1,
-			keyName = "onlyShowAtHunllef",
-			name = "Display only at Hunllef",
-			description = "If checked, only show the plugin panel when in the Hunllef fight"
-	)
-	default boolean onlyShowAtHunllef()
-	{
-		return true;
+		return VisibilityMode.InsideGauntlet;
 	}
 
 	@ConfigItem(

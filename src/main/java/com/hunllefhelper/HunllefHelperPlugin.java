@@ -2,6 +2,8 @@ package com.hunllefhelper;
 
 import com.google.inject.Provides;
 
+import com.hunllefhelper.config.AudioMode;
+import com.hunllefhelper.config.VisibilityMode;
 import com.hunllefhelper.ui.HunllefHelperPluginPanel;
 
 import java.awt.Color;
@@ -75,7 +77,7 @@ public class HunllefHelperPlugin extends Plugin
 		panel.setCounterActiveState(false);
 
 		wasInInstance = isInTheGauntlet();
-		updateNavigationBar((!config.autoHide() || wasInInstance), false);
+		updateNavigationBar((config.visibilityMode() == VisibilityMode.AlwaysVisible || wasInInstance), false);
 	}
 
 	@Override
@@ -91,12 +93,13 @@ public class HunllefHelperPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick tick)
 	{
-		if (!config.autoHide())
+		if (config.visibilityMode() == VisibilityMode.AlwaysVisible)
 		{
 			return;
 		}
 
-		boolean isInInstance = config.onlyShowAtHunllef() ? isInHunllefRoom() : isInTheGauntlet();
+		boolean isInInstance = config.visibilityMode() == VisibilityMode.OnlyInHunllefRoom
+				? isInHunllefRoom() : isInTheGauntlet();
 		if (isInInstance != wasInInstance)
 		{
 			updateNavigationBar(isInInstance, true);
@@ -108,7 +111,7 @@ public class HunllefHelperPlugin extends Plugin
 	public void onConfigChanged(ConfigChanged event)
 	{
 		wasInInstance = isInTheGauntlet();
-		updateNavigationBar((!config.autoHide() || wasInInstance), false);
+		updateNavigationBar((config.visibilityMode() == VisibilityMode.AlwaysVisible || wasInInstance), false);
 
 		if (audioMode != config.audioMode())
 		{

@@ -1,4 +1,4 @@
-package com.hunllefhelper;
+package com.hunllefhelper.config;
 
 public enum AudioMode
 {
