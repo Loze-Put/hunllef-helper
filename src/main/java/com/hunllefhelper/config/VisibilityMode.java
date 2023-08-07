@@ -5,11 +5,11 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum VisibilityMode
+public enum PanelVisibility
 {
-    AlwaysVisible("Always Visible"),
-    InsideGauntlet("Only Inside Gauntlet"),
-    OnlyInHunllefRoom("Only In Hunllef Room");
+    Always("Always"),
+    InsideGauntlet("Inside Gauntlet"),
+    AtHunllef("At Hunllef");
 
     private final String name;
 
