@@ -1,7 +1,7 @@
-package com.hunllefhelper;
+package com.hunllefhelper.config;
 
 import com.hunllefhelper.config.AudioMode;
-import com.hunllefhelper.config.VisibilityMode;
+import com.hunllefhelper.config.PanelVisibility;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
@@ -11,13 +11,13 @@ public interface HunllefHelperConfig extends Config
 {
 	@ConfigItem(
 		position = 1,
-		keyName = "visibilityMode",
-		name = "Visibility Mode",
+		keyName = "panelVisibility",
+		name = "PanelVisibility",
 		description = "Determines when the plugin panel is shown."
 	)
-	default VisibilityMode visibilityMode()
+	default PanelVisibility panelVisibility()
 	{
-		return VisibilityMode.InsideGauntlet;
+		return PanelVisibility.InsideGauntlet;
 	}
 
 	@ConfigItem(

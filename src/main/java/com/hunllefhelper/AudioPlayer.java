@@ -1,6 +1,7 @@
 package com.hunllefhelper;
 
 import com.hunllefhelper.config.AudioMode;
+import com.hunllefhelper.config.HunllefHelperConfig;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.RuneLite;
 
