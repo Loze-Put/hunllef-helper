@@ -225,14 +225,17 @@ public class HunllefHelperPlugin extends Plugin
 
 		WorldPoint playerLocation = WorldPoint.fromLocalInstance(client, player.getLocalLocation());
 		int regionId = playerLocation.getRegionID();
-		if (regionId == REGION_ID_GAUNTLET_NORMAL || regionId == REGION_ID_GAUNTLET_CORRUPTED) {
-			int playerX = playerLocation.getRegionX();
-			int playerY = playerLocation.getRegionY();
-            return playerX >= HUNLLEF_ROOM_X_MIN && playerX <= HUNLLEF_ROOM_X_MAX
-                    && playerY >= HUNLLEF_ROOM_Y_MIN && playerY <= HUNLLEF_ROOM_Y_MAX;
-		}
-
-		return false;
+		
+		if (regionId != REGION_ID_GAUNTLET_NORMAL && regionId != REGION_ID_GAUNTLET_CORRUPTED)
+		{
+			return;
+		{
+		
+		int playerX = playerLocation.getRegionX();
+		int playerY = playerLocation.getRegionY();
+		
+		return playerX >= HUNLLEF_ROOM_X_MIN && playerX <= HUNLLEF_ROOM_X_MAX
+			&& playerY >= HUNLLEF_ROOM_Y_MIN && playerY <= HUNLLEF_ROOM_Y_MAX;
 	}
 
 	private void updateNavigationBar(boolean enable, boolean selectPanel)
