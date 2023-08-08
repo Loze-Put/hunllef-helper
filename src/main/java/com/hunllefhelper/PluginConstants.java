@@ -17,6 +17,12 @@ final class PluginConstants
 		add(REGION_ID_GAUNTLET_CORRUPTED);
 	}});
 
+	// Coordinates
+	public static final int HUNLLEF_ROOM_X_MIN = 49;
+	public static final int HUNLLEF_ROOM_X_MAX = 62;
+	public static final int HUNLLEF_ROOM_Y_MIN = 49;
+	public static final int HUNLLEF_ROOM_Y_MAX = 62;
+
 	// Timings
 	public static final int MILLIS_PER_TICK = 600;
 	public static final int COUNTER_INTERVAL = 200;
