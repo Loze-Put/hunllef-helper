@@ -18,10 +18,10 @@ final class PluginConstants
 	}});
 
 	// Coordinates
-	public static final int HUNLLEF_ROOM_X_MIN = 50;
-	public static final int HUNLLEF_ROOM_X_MAX = 61;
-	public static final int HUNLLEF_ROOM_Y_MIN = 50;
-	public static final int HUNLLEF_ROOM_Y_MAX = 61;
+	public static final int HUNLLEF_ROOM_X_MIN = 49;
+	public static final int HUNLLEF_ROOM_X_MAX = 62;
+	public static final int HUNLLEF_ROOM_Y_MIN = 49;
+	public static final int HUNLLEF_ROOM_Y_MAX = 62;
 
 	// Timings
 	public static final int MILLIS_PER_TICK = 600;
