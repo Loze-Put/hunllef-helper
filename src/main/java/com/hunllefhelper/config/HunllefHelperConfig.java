@@ -12,7 +12,7 @@ public interface HunllefHelperConfig extends Config
 	@ConfigItem(
 		position = 1,
 		keyName = "panelVisibility",
-		name = "PanelVisibility",
+		name = "Show Panel",
 		description = "Determines when the plugin panel is shown."
 	)
 	default PanelVisibility panelVisibility()
