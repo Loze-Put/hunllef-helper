@@ -13,9 +13,15 @@ import java.util.HashMap;
 public class AudioPlayer
 {
 	private HashMap<String, Clip> clips = new HashMap<String, Clip>();
+	private float volume = 1f;
 
 	public void tryLoadAudio(HunllefHelperConfig config, String[] clipNames)
 	{
+		if (config.audioMode() == AudioMode.Disabled)
+		{
+			return;
+		}
+
 		for (String clipName : clipNames)
 		{
 			tryLoadClip(config.audioMode(), clipName);
@@ -24,9 +30,8 @@ public class AudioPlayer
 
 	public void unloadAudio()
 	{
-		for (String clipName : clips.keySet())
+		for (Clip clip : clips.values())
 		{
-			Clip clip = clips.get(clipName);
 			clip.stop();
 			clip.flush();
 			clip.close();
@@ -45,6 +50,23 @@ public class AudioPlayer
 		}
 	}
 
+	public void setVolume(int volume)
+	{
+		float volumeF = volume / 100f;
+		volumeF = Math.max(volumeF, 0f);
+		volumeF = Math.min(volumeF, 2f);
+
+		if (this.volume != volumeF)
+		{
+			this.volume = volumeF;
+
+			for (Clip clip : clips.values())
+			{
+				setClipVolume(clip);
+			}
+		}
+	}
+
 	private boolean tryLoadClip(AudioMode audioMode, String clipName)
 	{
 		if (audioMode == AudioMode.Custom)
@@ -58,6 +80,7 @@ public class AudioPlayer
 				Clip clip = AudioSystem.getClip();
 				clips.put(clipName, clip);
 				clip.open(sound);
+				setClipVolume(clip);
 				return true;
 			}
 			catch (UnsupportedAudioFileException | IOException | LineUnavailableException | SecurityException ex)
@@ -74,6 +97,7 @@ public class AudioPlayer
 			Clip clip = AudioSystem.getClip();
 			clips.put(clipName, clip);
 			clip.open(audioInputStream);
+			setClipVolume(clip);
 			return true;
 		}
 		catch (UnsupportedAudioFileException | IOException | LineUnavailableException | SecurityException ex)
@@ -82,5 +106,11 @@ public class AudioPlayer
 		}
 
 		return false;
+	}
+
+	private void setClipVolume(Clip clip)
+	{
+		FloatControl gainControl = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
+		gainControl.setValue(20f * (float) Math.log10(volume));
 	}
 }

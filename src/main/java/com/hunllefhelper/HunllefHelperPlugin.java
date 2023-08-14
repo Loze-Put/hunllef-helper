@@ -4,16 +4,13 @@ import com.google.inject.Provides;
 
 import com.hunllefhelper.config.AudioMode;
 import com.hunllefhelper.config.HunllefHelperConfig;
-import com.hunllefhelper.config.PanelVisibility;
 import com.hunllefhelper.ui.HunllefHelperPluginPanel;
-
 import java.awt.Color;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.swing.SwingUtilities;
-
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.Player;
@@ -54,16 +51,15 @@ public class HunllefHelperPlugin extends Plugin
 
 	private int counter;
 	private boolean isRanged;
-	private boolean wasPanelVisible;
-	private AudioMode audioMode;
+	private boolean isPanelVisible;
 
 	private NavigationButton navigationButton;
 
 	@Override
 	protected void startUp() throws Exception
 	{
-		audioPlayer.tryLoadAudio(config, new String[]{SOUND_MAGE, SOUND_RANGE, SOUND_ONE, SOUND_TWO});
-		audioMode = config.audioMode();
+		audioPlayer.setVolume(config.volume());
+		audioPlayer.tryLoadAudio(config, SOUNDS);
 
 		panel = injector.getInstance(HunllefHelperPluginPanel.class);
 
@@ -77,8 +73,7 @@ public class HunllefHelperPlugin extends Plugin
 
 		panel.setCounterActiveState(false);
 
-		wasPanelVisible = isInTheGauntlet();
-		updateNavigationBar((config.panelVisibility() == PanelVisibility.Always || wasPanelVisible), false);
+		updatePanelVisibility(false);
 	}
 
 	@Override
@@ -94,31 +89,24 @@ public class HunllefHelperPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick tick)
 	{
-		if (config.panelVisibility() == PanelVisibility.Always)
-		{
-			return;
-		}
-
-		boolean shouldPanelBeVisible = config.panelVisibility() == PanelVisibility.AtHunllef
-				? isInHunllefRoom() : isInTheGauntlet();
-		if (shouldPanelBeVisible != wasPanelVisible)
-		{
-			updateNavigationBar(shouldPanelBeVisible, true);
-			wasPanelVisible = shouldPanelBeVisible;
-		}
+		updatePanelVisibility(true);
 	}
 
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event)
 	{
-		wasPanelVisible = isInTheGauntlet();
-		updateNavigationBar((config.panelVisibility() == PanelVisibility.Always || wasPanelVisible), false);
-
-		if (audioMode != config.audioMode())
+		switch (event.getKey())
 		{
-			audioPlayer.unloadAudio();
-			audioPlayer.tryLoadAudio(config, new String[]{SOUND_MAGE, SOUND_RANGE, SOUND_ONE, SOUND_TWO});
-			audioMode = config.audioMode();
+			case CONFIG_KEY_AUDIO_MODE:
+				audioPlayer.unloadAudio();
+				audioPlayer.tryLoadAudio(config, SOUNDS);
+				break;
+			case CONFIG_KEY_PANEL_VISIBILITY:
+				updatePanelVisibility(false);
+				break;
+			case CONFIG_KEY_VOLUME:
+				audioPlayer.setVolume(config.volume());
+				break;
 		}
 	}
 
@@ -201,6 +189,28 @@ public class HunllefHelperPlugin extends Plugin
 		}
 
 		executorService.submit(() -> audioPlayer.playSoundClip(soundFile));
+	}
+
+	private void updatePanelVisibility(boolean selectPanel)
+	{
+		boolean panelShouldBeVisible = shouldShowPanel();
+
+		if (panelShouldBeVisible != isPanelVisible)
+		{
+			updateNavigationBar(panelShouldBeVisible, selectPanel);
+			isPanelVisible = panelShouldBeVisible;
+		}
+	}
+
+	private boolean shouldShowPanel()
+	{
+		switch (config.panelVisibility())
+		{
+			case Always: return true;
+			case InsideGauntlet: return isInTheGauntlet();
+			case AtHunllef: return isInHunllefRoom();
+			default: return false;
+		}
 	}
 
 	private boolean isInTheGauntlet()

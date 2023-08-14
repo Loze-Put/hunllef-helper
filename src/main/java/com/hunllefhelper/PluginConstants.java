@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-final class PluginConstants
+public final class PluginConstants
 {
 	// Region ids
 	public static final int REGION_ID_GAUNTLET_LOBBY = 12127;
@@ -35,6 +35,12 @@ final class PluginConstants
 	public static final String SOUND_ONE = "/audio/one.wav";
 	public static final String SOUND_MAGE = "/audio/mage.wav";
 	public static final String SOUND_RANGE = "/audio/range.wav";
+	public static final String[] SOUNDS = new String[]{SOUND_MAGE, SOUND_RANGE, SOUND_ONE, SOUND_TWO};
+
+	// Configuration
+	public static final String CONFIG_KEY_AUDIO_MODE = "audioMode";
+	public static final String CONFIG_KEY_PANEL_VISIBILITY = "panelVisibility";
+	public static final String CONFIG_KEY_VOLUME = "volume";
 
 	private PluginConstants()
 	{

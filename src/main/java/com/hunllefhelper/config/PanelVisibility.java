@@ -7,15 +7,15 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum PanelVisibility
 {
-    Always("Always"),
-    InsideGauntlet("Inside Gauntlet"),
-    AtHunllef("At Hunllef");
+	Always("Always"),
+	InsideGauntlet("Inside Gauntlet"),
+	AtHunllef("At Hunllef");
 
-    private final String name;
+	private final String name;
 
-    @Override
-    public String toString()
-    {
-        return name;
-    }
+	@Override
+	public String toString()
+	{
+		return name;
+	}
 }
