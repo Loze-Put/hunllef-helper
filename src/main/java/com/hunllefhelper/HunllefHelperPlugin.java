@@ -4,6 +4,8 @@ import com.google.inject.Provides;
 
 import com.hunllefhelper.config.AudioMode;
 import com.hunllefhelper.config.HunllefHelperConfig;
+import com.hunllefhelper.config.PanelVisibility;
+import static com.hunllefhelper.PluginConstants.*;
 import com.hunllefhelper.ui.HunllefHelperPluginPanel;
 import java.awt.Color;
 import java.util.concurrent.Executors;
@@ -25,8 +27,6 @@ import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.util.ImageUtil;
 
-import static com.hunllefhelper.PluginConstants.*;
-
 @Slf4j
 @PluginDescriptor(
 	name = "Hunllef Helper"
@@ -45,6 +45,9 @@ public class HunllefHelperPlugin extends Plugin
 	@Inject
 	private AudioPlayer audioPlayer;
 
+	@Inject
+	private ConfigManager configManager;
+
 	private HunllefHelperPluginPanel panel;
 
 	private ScheduledExecutorService executorService;
@@ -58,6 +61,8 @@ public class HunllefHelperPlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
+		migrate();
+
 		audioPlayer.setVolume(config.volume());
 		audioPlayer.tryLoadAudio(config, SOUNDS);
 
@@ -291,6 +296,18 @@ public class HunllefHelperPlugin extends Plugin
 				Thread.currentThread().interrupt();
 			}
 			executorService = null;
+		}
+	}
+
+	private void migrate()
+	{
+		final String groupName = "hunllefhelper";
+
+		Boolean autoHide = configManager.getConfiguration(groupName, "autoHide", Boolean.TYPE);
+		if (autoHide != null && autoHide == false)
+		{
+			configManager.setConfiguration(groupName, "panelVisibility", PanelVisibility.Always);
+			configManager.unsetConfiguration(groupName, "autoHide");
 		}
 	}
 }

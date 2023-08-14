@@ -2,6 +2,10 @@
 All notable changes to this plugin will be documented in this file.
 
 ----------------------------------------------------------------------
+## [1.3.0] - 2023-08-08
+### Added
+- The "Auto hide" configuration is changed to "Show Panel" and now has the option to show the panel only in the Hunllef room.
+
 ## [1.2.2] - 2022-07-29
 ### Fixed
 - Another attempt to fix the audio not playing issue.
