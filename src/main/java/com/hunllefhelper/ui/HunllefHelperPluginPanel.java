@@ -6,7 +6,9 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.util.ArrayList;
 import javax.inject.Inject;
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
@@ -25,13 +27,11 @@ public class HunllefHelperPluginPanel extends PluginPanel
 	private final JPanel activeView;
 	private final JPanel inactiveView;
 
-	private final JLabel timeLabel;
-	private final JLabel styleLabel;
+	private final ArrayList<Button> activeButtons = new ArrayList<Button>();
+	private final ArrayList<Button> inactiveButtons = new ArrayList<Button>();
 
-	private Button startRangedButton;
-	private Button startMageButton;
-	private Button trampleButton;
-	private Button resetButton;
+	private JLabel timeLabel;
+	private JLabel styleLabel;
 
 	@Inject
 	public HunllefHelperPluginPanel(HunllefHelperPlugin plugin)
@@ -51,31 +51,8 @@ public class HunllefHelperPluginPanel extends PluginPanel
 		add(title, BorderLayout.NORTH);
 		add(contentPanel, BorderLayout.CENTER);
 
-		JPanel timerPanel = new JPanel();
-		timerPanel.setLayout(new DynamicGridLayout(0, 1, 0, 20));
-
-		timeLabel = new JLabel("", SwingConstants.CENTER);
-		timeLabel.setForeground(Color.WHITE);
-		timeLabel.setFont(new Font(timeLabel.getFont().getName(), Font.PLAIN, 50));
-
-		styleLabel = new JLabel("", SwingConstants.CENTER);
-		styleLabel.setForeground(Color.CYAN);
-		styleLabel.setFont(new Font(styleLabel.getFont().getName(), Font.PLAIN, 50));
-
-		timerPanel.add(styleLabel, BorderLayout.NORTH);
-		timerPanel.add(timeLabel, BorderLayout.NORTH);
-		timerPanel.setBorder(new EmptyBorder(BORDER_OFFSET, 0, BORDER_OFFSET, 0));
-
-		JLabel instructionLabel = new JLabel("<html>Press 'Start' right after you got hit by the first Hunllef attack. Press the 'I got trampled!' button if you get trampled by Hunllef.</html>");
-		instructionLabel.setBorder(new EmptyBorder(BORDER_OFFSET, 0, BORDER_OFFSET, 0));
-
-		activeView = new JPanel();
-		activeView.setLayout(new BorderLayout());
-		activeView.add(timerPanel, BorderLayout.NORTH);
-
-		inactiveView = new JPanel();
-		inactiveView.setLayout(new BorderLayout());
-		inactiveView.add(instructionLabel, BorderLayout.NORTH);
+		activeView = createActiveView();
+		inactiveView = createInactiveView();
 	}
 
 	public void setTime(int millis)
@@ -109,78 +86,148 @@ public class HunllefHelperPluginPanel extends PluginPanel
 	{
 		SwingUtilities.invokeLater(() ->
 		{
-			// Recreate the buttons in order to reset the styling. The styling
-			// messes up because the button is removed from the view on click.
-			// Because of this, some of the mouse events do not occur.
-			if (active)
-			{
-				createTrampleButton();
-				createResetButton();
-			}
-			else
-			{
-				createStartRangedButton();
-				createStartMageButton();
-			}
-
 			contentPanel.removeAll();
 			contentPanel.add(active ? activeView : inactiveView, BorderLayout.CENTER);
 			contentPanel.revalidate();
 			contentPanel.repaint();
+
+			// The styling of buttons is messed up because they are removed from
+			// the view when switching between active and not active. Reset the
+			// styling to prevent this behaviour.
+			if (active)
+			{
+				for (Button button : inactiveButtons)
+				{
+					button.resetStyling();
+				}
+			}
+			else
+			{
+				for (Button button : activeButtons)
+				{
+					button.resetStyling();
+				}
+			}
 		});
 	}
 
-	private void createStartRangedButton()
+	private JPanel createActiveView()
 	{
-		if (startRangedButton != null)
-		{
-			inactiveView.remove(startRangedButton);
-		}
+		JPanel activePanel = new JPanel();
+		activePanel.setLayout(new BorderLayout());
 
-		startRangedButton = new Button("Start");
-		startRangedButton.addMouseButton1PressedHandler(() -> plugin.start(true));
+		// North
+		activePanel.add(createTimerPanel(), BorderLayout.NORTH);
 
-		inactiveView.add(startRangedButton, BorderLayout.CENTER);
+		// Center
+		JPanel centerPanel = new JPanel();
+		centerPanel.setLayout(new BorderLayout());
+		centerPanel.add(createTickButtonsPanel(), BorderLayout.NORTH);
+		JButton trampleButton = createTrampleButton();
+		activePanel.add(trampleButton);
+		centerPanel.add(trampleButton, BorderLayout.CENTER);
+		activePanel.add(centerPanel, BorderLayout.CENTER);
+
+		// South
+		Button resetButton = createResetButton();
+		activeButtons.add(resetButton);
+		activePanel.add(resetButton, BorderLayout.SOUTH);
+
+		return activePanel;
 	}
 
-	private void createStartMageButton()
+	private JPanel createInactiveView()
 	{
-		if (startMageButton != null)
-		{
-			inactiveView.remove(startMageButton);
-		}
+		JPanel inactivePanel = new JPanel();
+		inactivePanel.setLayout(new BorderLayout());
 
-		startMageButton = new Button("Start mage");
-		startMageButton.setPreferredSize(new Dimension(PANEL_WIDTH, 60));
-		startMageButton.addMouseButton1PressedHandler(() -> plugin.start(false));
+		// North
+		JLabel instructionLabel = new JLabel("<html>Press 'Start' right after you got hit by the first Hunllef attack. Press the 'I got trampled!' button if you get trampled by Hunllef.</html>");
+		instructionLabel.setBorder(new EmptyBorder(BORDER_OFFSET, 0, BORDER_OFFSET, 0));
+		inactivePanel.add(instructionLabel, BorderLayout.NORTH);
 
-		inactiveView.add(startMageButton, BorderLayout.SOUTH);
+		// Center
+		Button startRangedButton = createStartRangedButton();
+		inactiveButtons.add(startRangedButton);
+		inactivePanel.add(startRangedButton, BorderLayout.CENTER);
+
+		// South
+		Button startMageButton = createStartMageButton();
+		inactiveButtons.add(startMageButton);
+		inactivePanel.add(startMageButton, BorderLayout.SOUTH);
+
+		return inactivePanel;
 	}
 
-	private void createTrampleButton()
+	private JPanel createTimerPanel()
 	{
-		if (trampleButton != null)
-		{
-			activeView.remove(trampleButton);
-		}
+		JPanel timerPanel = new JPanel();
+		timerPanel.setLayout(new DynamicGridLayout(0, 1, 0, 20));
 
-		trampleButton = new Button("I got trampled!");
-		trampleButton.addMouseButton1PressedHandler(plugin::trample);
+		timeLabel = new JLabel("", SwingConstants.CENTER);
+		timeLabel.setForeground(Color.WHITE);
+		timeLabel.setFont(new Font(timeLabel.getFont().getName(), Font.PLAIN, 50));
 
-		activeView.add(trampleButton, BorderLayout.CENTER);
+		styleLabel = new JLabel("", SwingConstants.CENTER);
+		styleLabel.setForeground(Color.CYAN);
+		styleLabel.setFont(new Font(styleLabel.getFont().getName(), Font.PLAIN, 50));
+
+		timerPanel.add(styleLabel, BorderLayout.NORTH);
+		timerPanel.add(timeLabel, BorderLayout.NORTH);
+		timerPanel.setBorder(new EmptyBorder(BORDER_OFFSET, 0, BORDER_OFFSET, 0));
+
+		return timerPanel;
 	}
 
-	private void createResetButton()
+	private Button createStartRangedButton()
 	{
-		if (resetButton != null)
-		{
-			activeView.remove(resetButton);
-		}
+		Button button = new Button("Start");
+		button.addMouseButton1PressedHandler(() -> plugin.start(true));
+		return button;
+	}
 
-		resetButton = new Button("Reset");
-		resetButton.setPreferredSize(new Dimension(PANEL_WIDTH, 60));
-		resetButton.addMouseButton1PressedHandler(plugin::reset);
+	private Button createStartMageButton()
+	{
+		Button button = new Button("Start mage");
+		button.setPreferredSize(new Dimension(PANEL_WIDTH, 60));
+		button.addMouseButton1PressedHandler(() -> plugin.start(false));
+		return button;
+	}
 
-		activeView.add(resetButton, BorderLayout.SOUTH);
+	private JPanel createTickButtonsPanel()
+	{
+		JPanel tickPanel = new JPanel();
+		tickPanel.setLayout(new BorderLayout());
+
+		// West
+		Button minus1TickButton = new Button("-1 tick");
+		activeButtons.add(minus1TickButton);
+		minus1TickButton.setPreferredSize(new Dimension(PANEL_WIDTH / 2 + BORDER_OFFSET / 2, 60));
+		minus1TickButton.addMouseButton1PressedHandler(() -> plugin.addTicks(-1));
+		tickPanel.add(minus1TickButton, BorderLayout.WEST);
+
+		// East
+		Button plus1TickButton = new Button("+1 tick");
+		activeButtons.add(plus1TickButton);
+		plus1TickButton.setPreferredSize(new Dimension(PANEL_WIDTH / 2 + BORDER_OFFSET / 2, 60));
+		plus1TickButton.addMouseButton1PressedHandler(() -> plugin.addTicks(1));
+		tickPanel.add(plus1TickButton, BorderLayout.EAST);
+
+		return tickPanel;
+	}
+
+	private Button createTrampleButton()
+	{
+		Button button = new Button("I got trampled!");
+		button.addMouseButton1PressedHandler(plugin::trample);
+		return button;
+	}
+
+	private Button createResetButton()
+	{
+		Button button = new Button("Reset");
+		button.setPreferredSize(new Dimension(PANEL_WIDTH, 60));
+		button.addMouseButton1PressedHandler(plugin::reset);
+		return button;
 	}
 }

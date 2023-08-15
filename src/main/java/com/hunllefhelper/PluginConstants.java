@@ -38,9 +38,17 @@ public final class PluginConstants
 	public static final String[] SOUNDS = new String[]{SOUND_MAGE, SOUND_RANGE, SOUND_ONE, SOUND_TWO};
 
 	// Configuration
+	public static final String CONFIG_GROUP = "hunllefhelper";
 	public static final String CONFIG_KEY_AUDIO_MODE = "audioMode";
 	public static final String CONFIG_KEY_PANEL_VISIBILITY = "panelVisibility";
-	public static final String CONFIG_KEY_VOLUME = "volume";
+	public static final String CONFIG_KEY_AUDIO_VOLUME = "audioVolume";
+	public static final String CONFIG_KEY_HOTKEYS_ONLY_WITH_PANEL = "onlyWithPanel";
+	public static final String CONFIG_KEY_HOTKEY_START = "hotkeyStart";
+	public static final String CONFIG_KEY_HOTKEY_START_MAGE = "hotkeyStartMage";
+	public static final String CONFIG_KEY_HOTKEY_MINUS_ONE_TICK = "hotkeyMinusOneTick";
+	public static final String CONFIG_KEY_HOTKEY_PLUS_ONE_TICK = "hotkeyPlusOneTick";
+	public static final String CONFIG_KEY_HOTKEY_RESET = "hotkeyReset";
+	public static final String CONFIG_KEY_HOTKEY_TRAMPLE = "hotkeyTrample";
 
 	private PluginConstants()
 	{

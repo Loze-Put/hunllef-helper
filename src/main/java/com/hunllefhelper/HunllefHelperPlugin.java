@@ -1,13 +1,13 @@
 package com.hunllefhelper;
 
 import com.google.inject.Provides;
-
 import com.hunllefhelper.config.AudioMode;
 import com.hunllefhelper.config.HunllefHelperConfig;
 import com.hunllefhelper.config.PanelVisibility;
 import static com.hunllefhelper.PluginConstants.*;
 import com.hunllefhelper.ui.HunllefHelperPluginPanel;
 import java.awt.Color;
+import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -21,6 +21,8 @@ import net.runelite.api.events.GameTick;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
+import net.runelite.client.input.KeyListener;
+import net.runelite.client.input.KeyManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.ClientToolbar;
@@ -48,22 +50,25 @@ public class HunllefHelperPlugin extends Plugin
 	@Inject
 	private ConfigManager configManager;
 
-	private HunllefHelperPluginPanel panel;
+	@Inject
+	private KeyManager keyManager;
 
+	private HunllefHelperPluginPanel panel;
 	private ScheduledExecutorService executorService;
+	private NavigationButton navigationButton;
+	private final ArrayList<ConditionalHotkeyListener> keyListeners = new ArrayList<>();
 
 	private int counter;
 	private boolean isRanged;
 	private boolean isPanelVisible;
-
-	private NavigationButton navigationButton;
+	private boolean started;
 
 	@Override
 	protected void startUp() throws Exception
 	{
 		migrate();
 
-		audioPlayer.setVolume(config.volume());
+		audioPlayer.setVolume(config.audioVolume());
 		audioPlayer.tryLoadAudio(config, SOUNDS);
 
 		panel = injector.getInstance(HunllefHelperPluginPanel.class);
@@ -79,11 +84,14 @@ public class HunllefHelperPlugin extends Plugin
 		panel.setCounterActiveState(false);
 
 		updatePanelVisibility(false);
+
+		addKeyListeners();
 	}
 
 	@Override
 	protected void shutDown() throws Exception
 	{
+		removeKeyListeners();
 		updateNavigationBar(false, false);
 		shutdownExecutorService();
 		panel = null;
@@ -109,14 +117,15 @@ public class HunllefHelperPlugin extends Plugin
 			case CONFIG_KEY_PANEL_VISIBILITY:
 				updatePanelVisibility(false);
 				break;
-			case CONFIG_KEY_VOLUME:
-				audioPlayer.setVolume(config.volume());
+			case CONFIG_KEY_AUDIO_VOLUME:
+				audioPlayer.setVolume(config.audioVolume());
 				break;
 		}
 	}
 
 	public void start(boolean withRanged)
 	{
+		started = true;
 		isRanged = withRanged;
 
 		if (withRanged)
@@ -127,7 +136,7 @@ public class HunllefHelperPlugin extends Plugin
 		{
 			panel.setStyle("Mage", Color.CYAN);
 		}
-		panel.setCounterActiveState(true);
+		panel.setCounterActiveState(started);
 		counter = INITIAL_COUNTER;
 
 		executorService = Executors.newSingleThreadScheduledExecutor();
@@ -139,10 +148,16 @@ public class HunllefHelperPlugin extends Plugin
 		counter += ATTACK_DURATION;
 	}
 
+	public void addTicks(int ticks)
+	{
+		counter += ticks * MILLIS_PER_TICK;
+	}
+
 	public void reset()
 	{
+		started = false;
 		shutdownExecutorService();
-		panel.setCounterActiveState(false);
+		panel.setCounterActiveState(started);
 	}
 
 	@Provides
@@ -182,7 +197,7 @@ public class HunllefHelperPlugin extends Plugin
 			}
 
 			isRanged = !isRanged;
-			counter = ROTATION_DURATION;
+			counter += ROTATION_DURATION;
 		}
 	}
 
@@ -214,6 +229,7 @@ public class HunllefHelperPlugin extends Plugin
 			case Always: return true;
 			case InsideGauntlet: return isInTheGauntlet();
 			case AtHunllef: return isInHunllefRoom();
+			case Never:
 			default: return false;
 		}
 	}
@@ -301,13 +317,62 @@ public class HunllefHelperPlugin extends Plugin
 
 	private void migrate()
 	{
-		final String groupName = "hunllefhelper";
-
-		Boolean autoHide = configManager.getConfiguration(groupName, "autoHide", Boolean.TYPE);
-		if (autoHide != null && autoHide == false)
+		// Migrate the old "autoHide" config to the new panel visibility enum.
+		Boolean autoHide = configManager.getConfiguration(CONFIG_GROUP, "autoHide", Boolean.TYPE);
+		if (autoHide != null)
 		{
-			configManager.setConfiguration(groupName, "panelVisibility", PanelVisibility.Always);
-			configManager.unsetConfiguration(groupName, "autoHide");
+			if (autoHide == false)
+			{
+				configManager.setConfiguration(CONFIG_GROUP, CONFIG_KEY_PANEL_VISIBILITY, PanelVisibility.Always);
+			}
+			configManager.unsetConfiguration(CONFIG_GROUP, "autoHide");
 		}
+	}
+
+	private void addKeyListeners()
+	{
+		ConditionalHotkeyListener tempListener = new ConditionalHotkeyListener(() -> config.hotkeyStart(), this::hotkeysEnabled);
+		tempListener.registerHotkeyPressed(() -> start(true), () -> !started);
+		keyListeners.add(tempListener);
+
+		tempListener = new ConditionalHotkeyListener(() -> config.hotkeyStartMage(), this::hotkeysEnabled);
+		tempListener.registerHotkeyPressed(() -> start(false), () -> !started);
+		keyListeners.add(tempListener);
+
+		tempListener = new ConditionalHotkeyListener(() -> config.hotkeyMinusOneTick(), this::hotkeysEnabled);
+		tempListener.registerHotkeyPressed(() -> addTicks(-1), () -> started);
+		keyListeners.add(tempListener);
+
+		tempListener = new ConditionalHotkeyListener(() -> config.hotkeyPlusOneTick(), this::hotkeysEnabled);
+		tempListener.registerHotkeyPressed(() -> addTicks(1), () -> started);
+		keyListeners.add(tempListener);
+
+		tempListener = new ConditionalHotkeyListener(() -> config.hotkeyReset(), this::hotkeysEnabled);
+		tempListener.registerHotkeyPressed(() -> reset(), () -> started);
+		keyListeners.add(tempListener);
+
+		tempListener = new ConditionalHotkeyListener(() -> config.hotkeyTrample(), this::hotkeysEnabled);
+		tempListener.registerHotkeyPressed(() -> trample(), () -> started);
+		keyListeners.add(tempListener);
+
+		for (KeyListener listener : keyListeners)
+		{
+			keyManager.registerKeyListener(listener);
+		}
+	}
+
+	private void removeKeyListeners()
+	{
+		for (KeyListener listener : keyListeners)
+		{
+			keyManager.unregisterKeyListener(listener);
+		}
+
+		keyListeners.clear();
+	}
+
+	private boolean hotkeysEnabled()
+	{
+		return !config.hotkeysOnlyWithPanel() || navigationButton.isSelected();
 	}
 }
