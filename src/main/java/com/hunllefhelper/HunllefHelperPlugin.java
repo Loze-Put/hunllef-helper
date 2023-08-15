@@ -80,11 +80,9 @@ public class HunllefHelperPlugin extends Plugin
 			.icon(ImageUtil.loadImageResource(getClass(), "/nav-icon.png"))
 			.priority(100)
 			.panel(panel)
-			.onClick(this::setKeyListeners)
 			.build();
 
 		updatePanelVisibility(false);
-		setKeyListeners();
 	}
 
 	@Override
@@ -160,6 +158,21 @@ public class HunllefHelperPlugin extends Plugin
 		started = false;
 		shutdownExecutorService();
 		panel.setCounterActiveState(started);
+	}
+
+	public void setKeyListeners()
+	{
+		if (!config.hotkeysOnlyWithPanel() || navigationButton.isSelected())
+		{
+			if (keyListeners.isEmpty())
+			{
+				addKeyListeners();
+			}
+		}
+		else
+		{
+			removeKeyListeners();
+		}
 	}
 
 	@Provides
@@ -285,7 +298,6 @@ public class HunllefHelperPlugin extends Plugin
 					if (!navigationButton.isSelected())
 					{
 						navigationButton.getOnSelect().run();
-						setKeyListeners();
 					}
 				});
 			}
@@ -295,7 +307,6 @@ public class HunllefHelperPlugin extends Plugin
 			reset();
 			navigationButton.setSelected(false);
 			clientToolbar.removeNavigation(navigationButton);
-			setKeyListeners();
 		}
 	}
 
@@ -333,48 +344,14 @@ public class HunllefHelperPlugin extends Plugin
 		}
 	}
 
-	private void setKeyListeners()
-	{
-		boolean hotkeysEnabled = !config.hotkeysOnlyWithPanel() || navigationButton.isSelected();
-
-		if (hotkeysEnabled)
-		{
-			if (keyListeners.isEmpty())
-			{
-				addKeyListeners();
-			}
-		}
-		else
-		{
-			removeKeyListeners();
-		}
-	}
-
 	private void addKeyListeners()
 	{
-		ConditionalHotkeyListener tempListener = new ConditionalHotkeyListener(() -> config.hotkeyStart());
-		tempListener.registerHotkeyPressed(() -> start(true), () -> !started);
-		keyListeners.add(tempListener);
-
-		tempListener = new ConditionalHotkeyListener(() -> config.hotkeyStartMage());
-		tempListener.registerHotkeyPressed(() -> start(false), () -> !started);
-		keyListeners.add(tempListener);
-
-		tempListener = new ConditionalHotkeyListener(() -> config.hotkeyMinusOneTick());
-		tempListener.registerHotkeyPressed(() -> addTicks(-1), () -> started);
-		keyListeners.add(tempListener);
-
-		tempListener = new ConditionalHotkeyListener(() -> config.hotkeyPlusOneTick());
-		tempListener.registerHotkeyPressed(() -> addTicks(1), () -> started);
-		keyListeners.add(tempListener);
-
-		tempListener = new ConditionalHotkeyListener(() -> config.hotkeyReset());
-		tempListener.registerHotkeyPressed(() -> reset(), () -> started);
-		keyListeners.add(tempListener);
-
-		tempListener = new ConditionalHotkeyListener(() -> config.hotkeyTrample());
-		tempListener.registerHotkeyPressed(() -> trample(), () -> started);
-		keyListeners.add(tempListener);
+		keyListeners.add(new ConditionalHotkeyListener(() -> config.hotkeyStart(), () -> start(true), () -> !started));
+		keyListeners.add(new ConditionalHotkeyListener(() -> config.hotkeyStartMage(), () -> start(false), () -> !started));
+		keyListeners.add(new ConditionalHotkeyListener(() -> config.hotkeyMinusOneTick(), () -> addTicks(-1), () -> started));
+		keyListeners.add(new ConditionalHotkeyListener(() -> config.hotkeyPlusOneTick(), () -> addTicks(1), () -> started));
+		keyListeners.add(new ConditionalHotkeyListener(() -> config.hotkeyReset(), () -> reset(), () -> started));
+		keyListeners.add(new ConditionalHotkeyListener(() -> config.hotkeyTrample(), () -> trample(), () -> started));
 
 		for (KeyListener listener : keyListeners)
 		{

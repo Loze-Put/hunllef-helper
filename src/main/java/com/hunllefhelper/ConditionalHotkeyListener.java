@@ -9,16 +9,11 @@ class ConditionalHotkeyListener extends HotkeyListener
 	private Runnable hotkeyPressedHandler;
 	private Supplier<Boolean> hotkeyPressedEnabledSupplier;
 
-	public ConditionalHotkeyListener(Supplier<Keybind> hotkeySupplier)
+	public ConditionalHotkeyListener(Supplier<Keybind> hotkeySupplier, Runnable hotkeyPressedHandler, Supplier<Boolean> hotkeyPressedEnabledSupplier)
 	{
 		super(hotkeySupplier);
-		hotkeyPressedEnabledSupplier = () -> false;
-	}
-
-	public void registerHotkeyPressed(Runnable handler, Supplier<Boolean> enabledSupplier)
-	{
-		hotkeyPressedHandler = handler;
-		hotkeyPressedEnabledSupplier = enabledSupplier;
+		this.hotkeyPressedHandler = hotkeyPressedHandler;
+		this.hotkeyPressedEnabledSupplier = hotkeyPressedEnabledSupplier;
 	}
 
 	@Override

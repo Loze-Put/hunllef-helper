@@ -111,6 +111,18 @@ public class HunllefHelperPluginPanel extends PluginPanel
 		});
 	}
 
+	@Override
+	public void onActivate()
+	{
+		plugin.setKeyListeners();
+	}
+
+	@Override
+	public void onDeactivate()
+	{
+		plugin.setKeyListeners();
+	}
+
 	private JPanel createActiveView()
 	{
 		JPanel activePanel = new JPanel();
