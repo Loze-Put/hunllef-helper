@@ -72,6 +72,7 @@ public class HunllefHelperPlugin extends Plugin
 		audioPlayer.tryLoadAudio(config, SOUNDS);
 
 		panel = injector.getInstance(HunllefHelperPluginPanel.class);
+		panel.setCounterActiveState(false);
 
 		navigationButton = NavigationButton
 			.builder()
@@ -79,13 +80,11 @@ public class HunllefHelperPlugin extends Plugin
 			.icon(ImageUtil.loadImageResource(getClass(), "/nav-icon.png"))
 			.priority(100)
 			.panel(panel)
+			.onClick(this::setKeyListeners)
 			.build();
 
-		panel.setCounterActiveState(false);
-
 		updatePanelVisibility(false);
-
-		addKeyListeners();
+		setKeyListeners();
 	}
 
 	@Override
@@ -119,6 +118,9 @@ public class HunllefHelperPlugin extends Plugin
 				break;
 			case CONFIG_KEY_AUDIO_VOLUME:
 				audioPlayer.setVolume(config.audioVolume());
+				break;
+			case CONFIG_KEY_HOTKEYS_ONLY_WITH_PANEL:
+				setKeyListeners();
 				break;
 		}
 	}
@@ -283,6 +285,7 @@ public class HunllefHelperPlugin extends Plugin
 					if (!navigationButton.isSelected())
 					{
 						navigationButton.getOnSelect().run();
+						setKeyListeners();
 					}
 				});
 			}
@@ -292,6 +295,7 @@ public class HunllefHelperPlugin extends Plugin
 			reset();
 			navigationButton.setSelected(false);
 			clientToolbar.removeNavigation(navigationButton);
+			setKeyListeners();
 		}
 	}
 
@@ -329,29 +333,46 @@ public class HunllefHelperPlugin extends Plugin
 		}
 	}
 
+	private void setKeyListeners()
+	{
+		boolean hotkeysEnabled = !config.hotkeysOnlyWithPanel() || navigationButton.isSelected();
+
+		if (hotkeysEnabled)
+		{
+			if (keyListeners.isEmpty())
+			{
+				addKeyListeners();
+			}
+		}
+		else
+		{
+			removeKeyListeners();
+		}
+	}
+
 	private void addKeyListeners()
 	{
-		ConditionalHotkeyListener tempListener = new ConditionalHotkeyListener(() -> config.hotkeyStart(), this::hotkeysEnabled);
+		ConditionalHotkeyListener tempListener = new ConditionalHotkeyListener(() -> config.hotkeyStart());
 		tempListener.registerHotkeyPressed(() -> start(true), () -> !started);
 		keyListeners.add(tempListener);
 
-		tempListener = new ConditionalHotkeyListener(() -> config.hotkeyStartMage(), this::hotkeysEnabled);
+		tempListener = new ConditionalHotkeyListener(() -> config.hotkeyStartMage());
 		tempListener.registerHotkeyPressed(() -> start(false), () -> !started);
 		keyListeners.add(tempListener);
 
-		tempListener = new ConditionalHotkeyListener(() -> config.hotkeyMinusOneTick(), this::hotkeysEnabled);
+		tempListener = new ConditionalHotkeyListener(() -> config.hotkeyMinusOneTick());
 		tempListener.registerHotkeyPressed(() -> addTicks(-1), () -> started);
 		keyListeners.add(tempListener);
 
-		tempListener = new ConditionalHotkeyListener(() -> config.hotkeyPlusOneTick(), this::hotkeysEnabled);
+		tempListener = new ConditionalHotkeyListener(() -> config.hotkeyPlusOneTick());
 		tempListener.registerHotkeyPressed(() -> addTicks(1), () -> started);
 		keyListeners.add(tempListener);
 
-		tempListener = new ConditionalHotkeyListener(() -> config.hotkeyReset(), this::hotkeysEnabled);
+		tempListener = new ConditionalHotkeyListener(() -> config.hotkeyReset());
 		tempListener.registerHotkeyPressed(() -> reset(), () -> started);
 		keyListeners.add(tempListener);
 
-		tempListener = new ConditionalHotkeyListener(() -> config.hotkeyTrample(), this::hotkeysEnabled);
+		tempListener = new ConditionalHotkeyListener(() -> config.hotkeyTrample());
 		tempListener.registerHotkeyPressed(() -> trample(), () -> started);
 		keyListeners.add(tempListener);
 
@@ -369,10 +390,5 @@ public class HunllefHelperPlugin extends Plugin
 		}
 
 		keyListeners.clear();
-	}
-
-	private boolean hotkeysEnabled()
-	{
-		return !config.hotkeysOnlyWithPanel() || navigationButton.isSelected();
 	}
 }

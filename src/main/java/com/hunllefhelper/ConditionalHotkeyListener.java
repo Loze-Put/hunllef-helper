@@ -6,14 +6,12 @@ import net.runelite.client.util.HotkeyListener;
 
 class ConditionalHotkeyListener extends HotkeyListener
 {
-	private final Supplier<Boolean> enabledSupplier;
 	private Runnable hotkeyPressedHandler;
 	private Supplier<Boolean> hotkeyPressedEnabledSupplier;
 
-	public ConditionalHotkeyListener(Supplier<Keybind> hotkeySupplier, Supplier<Boolean> enabledSupplier)
+	public ConditionalHotkeyListener(Supplier<Keybind> hotkeySupplier)
 	{
 		super(hotkeySupplier);
-		this.enabledSupplier = enabledSupplier;
 		hotkeyPressedEnabledSupplier = () -> false;
 	}
 
@@ -26,12 +24,6 @@ class ConditionalHotkeyListener extends HotkeyListener
 	@Override
 	public void hotkeyPressed()
 	{
-		if (!enabledSupplier.get())
-		{
-			notifyAll();
-			return;
-		}
-
 		if (hotkeyPressedEnabledSupplier.get())
 		{
 			hotkeyPressedHandler.run();
