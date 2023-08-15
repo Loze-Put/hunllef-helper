@@ -1,13 +1,13 @@
 package com.hunllefhelper;
 
 import com.google.inject.Provides;
-
 import com.hunllefhelper.config.AudioMode;
 import com.hunllefhelper.config.HunllefHelperConfig;
 import com.hunllefhelper.config.PanelVisibility;
 import static com.hunllefhelper.PluginConstants.*;
 import com.hunllefhelper.ui.HunllefHelperPluginPanel;
 import java.awt.Color;
+import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -21,6 +21,8 @@ import net.runelite.api.events.GameTick;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
+import net.runelite.client.input.KeyListener;
+import net.runelite.client.input.KeyManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.ClientToolbar;
@@ -48,26 +50,29 @@ public class HunllefHelperPlugin extends Plugin
 	@Inject
 	private ConfigManager configManager;
 
-	private HunllefHelperPluginPanel panel;
+	@Inject
+	private KeyManager keyManager;
 
+	private HunllefHelperPluginPanel panel;
 	private ScheduledExecutorService executorService;
+	private NavigationButton navigationButton;
+	private final ArrayList<ConditionalHotkeyListener> keyListeners = new ArrayList<>();
 
 	private int counter;
 	private boolean isRanged;
-	private boolean wasPanelVisible;
-	private AudioMode audioMode;
-
-	private NavigationButton navigationButton;
+	private boolean isPanelVisible;
+	private boolean started;
 
 	@Override
 	protected void startUp() throws Exception
 	{
 		migrate();
 
-		audioPlayer.tryLoadAudio(config, new String[]{SOUND_MAGE, SOUND_RANGE, SOUND_ONE, SOUND_TWO});
-		audioMode = config.audioMode();
+		audioPlayer.setVolume(config.audioVolume());
+		audioPlayer.tryLoadAudio(config, SOUNDS);
 
 		panel = injector.getInstance(HunllefHelperPluginPanel.class);
+		panel.setCounterActiveState(false);
 
 		navigationButton = NavigationButton
 			.builder()
@@ -77,15 +82,13 @@ public class HunllefHelperPlugin extends Plugin
 			.panel(panel)
 			.build();
 
-		panel.setCounterActiveState(false);
-
-		wasPanelVisible = isInTheGauntlet();
-		updateNavigationBar((config.panelVisibility() == PanelVisibility.Always || wasPanelVisible), false);
+		updatePanelVisibility(false);
 	}
 
 	@Override
 	protected void shutDown() throws Exception
 	{
+		removeKeyListeners();
 		updateNavigationBar(false, false);
 		shutdownExecutorService();
 		panel = null;
@@ -96,36 +99,33 @@ public class HunllefHelperPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick tick)
 	{
-		if (config.panelVisibility() == PanelVisibility.Always)
-		{
-			return;
-		}
-
-		boolean shouldPanelBeVisible = config.panelVisibility() == PanelVisibility.AtHunllef
-				? isInHunllefRoom() : isInTheGauntlet();
-		if (shouldPanelBeVisible != wasPanelVisible)
-		{
-			updateNavigationBar(shouldPanelBeVisible, true);
-			wasPanelVisible = shouldPanelBeVisible;
-		}
+		updatePanelVisibility(true);
 	}
 
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event)
 	{
-		wasPanelVisible = isInTheGauntlet();
-		updateNavigationBar((config.panelVisibility() == PanelVisibility.Always || wasPanelVisible), false);
-
-		if (audioMode != config.audioMode())
+		switch (event.getKey())
 		{
-			audioPlayer.unloadAudio();
-			audioPlayer.tryLoadAudio(config, new String[]{SOUND_MAGE, SOUND_RANGE, SOUND_ONE, SOUND_TWO});
-			audioMode = config.audioMode();
+			case CONFIG_KEY_AUDIO_MODE:
+				audioPlayer.unloadAudio();
+				audioPlayer.tryLoadAudio(config, SOUNDS);
+				break;
+			case CONFIG_KEY_PANEL_VISIBILITY:
+				updatePanelVisibility(false);
+				break;
+			case CONFIG_KEY_AUDIO_VOLUME:
+				audioPlayer.setVolume(config.audioVolume());
+				break;
+			case CONFIG_KEY_HOTKEYS_ONLY_WITH_PANEL:
+				setKeyListeners();
+				break;
 		}
 	}
 
 	public void start(boolean withRanged)
 	{
+		started = true;
 		isRanged = withRanged;
 
 		if (withRanged)
@@ -136,7 +136,7 @@ public class HunllefHelperPlugin extends Plugin
 		{
 			panel.setStyle("Mage", Color.CYAN);
 		}
-		panel.setCounterActiveState(true);
+		panel.setCounterActiveState(started);
 		counter = INITIAL_COUNTER;
 
 		executorService = Executors.newSingleThreadScheduledExecutor();
@@ -148,10 +148,31 @@ public class HunllefHelperPlugin extends Plugin
 		counter += ATTACK_DURATION;
 	}
 
+	public void addTicks(int ticks)
+	{
+		counter += ticks * MILLIS_PER_TICK;
+	}
+
 	public void reset()
 	{
+		started = false;
 		shutdownExecutorService();
-		panel.setCounterActiveState(false);
+		panel.setCounterActiveState(started);
+	}
+
+	public void setKeyListeners()
+	{
+		if (!config.hotkeysOnlyWithPanel() || navigationButton.isSelected())
+		{
+			if (keyListeners.isEmpty())
+			{
+				addKeyListeners();
+			}
+		}
+		else
+		{
+			removeKeyListeners();
+		}
 	}
 
 	@Provides
@@ -191,7 +212,7 @@ public class HunllefHelperPlugin extends Plugin
 			}
 
 			isRanged = !isRanged;
-			counter = ROTATION_DURATION;
+			counter += ROTATION_DURATION;
 		}
 	}
 
@@ -203,6 +224,29 @@ public class HunllefHelperPlugin extends Plugin
 		}
 
 		executorService.submit(() -> audioPlayer.playSoundClip(soundFile));
+	}
+
+	private void updatePanelVisibility(boolean selectPanel)
+	{
+		boolean panelShouldBeVisible = shouldShowPanel();
+
+		if (panelShouldBeVisible != isPanelVisible)
+		{
+			updateNavigationBar(panelShouldBeVisible, selectPanel);
+			isPanelVisible = panelShouldBeVisible;
+		}
+	}
+
+	private boolean shouldShowPanel()
+	{
+		switch (config.panelVisibility())
+		{
+			case Always: return true;
+			case InsideGauntlet: return isInTheGauntlet();
+			case AtHunllef: return isInHunllefRoom();
+			case Never:
+			default: return false;
+		}
 	}
 
 	private boolean isInTheGauntlet()
@@ -288,13 +332,40 @@ public class HunllefHelperPlugin extends Plugin
 
 	private void migrate()
 	{
-		final String groupName = "hunllefhelper";
-
-		Boolean autoHide = configManager.getConfiguration(groupName, "autoHide", Boolean.TYPE);
-		if (autoHide != null && autoHide == false)
+		// Migrate the old "autoHide" config to the new panel visibility enum.
+		Boolean autoHide = configManager.getConfiguration(CONFIG_GROUP, "autoHide", Boolean.TYPE);
+		if (autoHide != null)
 		{
-			configManager.setConfiguration(groupName, "panelVisibility", PanelVisibility.Always);
-			configManager.unsetConfiguration(groupName, "autoHide");
+			if (autoHide == false)
+			{
+				configManager.setConfiguration(CONFIG_GROUP, CONFIG_KEY_PANEL_VISIBILITY, PanelVisibility.Always);
+			}
+			configManager.unsetConfiguration(CONFIG_GROUP, "autoHide");
 		}
+	}
+
+	private void addKeyListeners()
+	{
+		keyListeners.add(new ConditionalHotkeyListener(() -> config.hotkeyStart(), () -> start(true), () -> !started));
+		keyListeners.add(new ConditionalHotkeyListener(() -> config.hotkeyStartMage(), () -> start(false), () -> !started));
+		keyListeners.add(new ConditionalHotkeyListener(() -> config.hotkeyMinusOneTick(), () -> addTicks(-1), () -> started));
+		keyListeners.add(new ConditionalHotkeyListener(() -> config.hotkeyPlusOneTick(), () -> addTicks(1), () -> started));
+		keyListeners.add(new ConditionalHotkeyListener(() -> config.hotkeyReset(), this::reset, () -> started));
+		keyListeners.add(new ConditionalHotkeyListener(() -> config.hotkeyTrample(), this::trample, () -> started));
+
+		for (KeyListener listener : keyListeners)
+		{
+			keyManager.registerKeyListener(listener);
+		}
+	}
+
+	private void removeKeyListeners()
+	{
+		for (KeyListener listener : keyListeners)
+		{
+			keyManager.unregisterKeyListener(listener);
+		}
+
+		keyListeners.clear();
 	}
 }

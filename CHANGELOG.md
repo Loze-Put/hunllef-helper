@@ -2,6 +2,13 @@
 All notable changes to this plugin will be documented in this file.
 
 ----------------------------------------------------------------------
+## [1.4.0] - 2023-08-15
+### Added
+- Added the option to change the audio volume.
+- Added two buttons to add/subtract a tick to/from the timer.
+- Added hotkeys for all buttons.
+- Added the option to never show the plugin panel.
+
 ## [1.3.0] - 2023-08-08
 ### Added
 - The "Auto hide" configuration is changed to "Show Panel" and now has the option to show the panel only in the Hunllef room.

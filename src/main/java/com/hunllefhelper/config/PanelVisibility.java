@@ -9,7 +9,8 @@ public enum PanelVisibility
 {
 	Always("Always"),
 	InsideGauntlet("Inside Gauntlet"),
-	AtHunllef("At Hunllef");
+	AtHunllef("At Hunllef"),
+	Never("Never");
 
 	private final String name;
 

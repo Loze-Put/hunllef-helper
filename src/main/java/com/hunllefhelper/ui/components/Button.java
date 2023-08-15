@@ -26,4 +26,10 @@ public class Button extends JButton
 			}
 		});
 	}
+
+	public void resetStyling()
+	{
+		setEnabled(false);
+		setEnabled(true);
+	}
 }
