@@ -350,8 +350,8 @@ public class HunllefHelperPlugin extends Plugin
 		keyListeners.add(new ConditionalHotkeyListener(() -> config.hotkeyStartMage(), () -> start(false), () -> !started));
 		keyListeners.add(new ConditionalHotkeyListener(() -> config.hotkeyMinusOneTick(), () -> addTicks(-1), () -> started));
 		keyListeners.add(new ConditionalHotkeyListener(() -> config.hotkeyPlusOneTick(), () -> addTicks(1), () -> started));
-		keyListeners.add(new ConditionalHotkeyListener(() -> config.hotkeyReset(), () -> reset(), () -> started));
-		keyListeners.add(new ConditionalHotkeyListener(() -> config.hotkeyTrample(), () -> trample(), () -> started));
+		keyListeners.add(new ConditionalHotkeyListener(() -> config.hotkeyReset(), this::reset, () -> started));
+		keyListeners.add(new ConditionalHotkeyListener(() -> config.hotkeyTrample(), this::trample, () -> started));
 
 		for (KeyListener listener : keyListeners)
 		{
