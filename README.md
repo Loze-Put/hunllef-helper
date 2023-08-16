@@ -24,4 +24,4 @@ All changes to the plugin are tracked in the [changelog](https://github.com/Loze
 Feel free to open an issue in this repository to provide feedback on the plugin. Feature requests are welcome as well!
 
 ## Credits
-This plugin is based on the [Gauntlet Helper](https://gauntletcounter.herokuapp.com/) created by [Mazhar](https://twitter.com/Maz_rs). It features the same audio.
+This plugin is based on the Gauntlet Helper created by [Mazhar](https://twitter.com/Maz_rs). It features the same audio.
