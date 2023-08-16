@@ -83,6 +83,7 @@ public class HunllefHelperPlugin extends Plugin
 			.build();
 
 		updatePanelVisibility(false);
+		setKeyListeners();
 	}
 
 	@Override
