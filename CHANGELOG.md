@@ -2,6 +2,10 @@
 All notable changes to this plugin will be documented in this file.
 
 ----------------------------------------------------------------------
+## [1.4.1] - 2024-01-16
+### Changed
+- Changed the plugin to support RuneLite flatlaf.
+
 ## [1.4.0] - 2023-08-15
 ### Added
 - Added the option to change the audio volume.
