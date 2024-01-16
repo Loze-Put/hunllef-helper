@@ -60,7 +60,7 @@ public class HunllefHelperPlugin extends Plugin
 
 	private int counter;
 	private boolean isRanged;
-	private boolean isPanelVisible;
+	private boolean isPanelAdded;
 	private boolean started;
 
 	@Override
@@ -83,7 +83,7 @@ public class HunllefHelperPlugin extends Plugin
 			.build();
 
 		updatePanelVisibility(false);
-		setKeyListeners();
+		setKeyListeners(isPanelAdded);
 	}
 
 	@Override
@@ -119,7 +119,7 @@ public class HunllefHelperPlugin extends Plugin
 				audioPlayer.setVolume(config.audioVolume());
 				break;
 			case CONFIG_KEY_HOTKEYS_ONLY_WITH_PANEL:
-				setKeyListeners();
+				setKeyListeners(isPanelAdded);
 				break;
 		}
 	}
@@ -161,7 +161,7 @@ public class HunllefHelperPlugin extends Plugin
 		panel.setCounterActiveState(started);
 	}
 
-	public void setKeyListeners()
+	public void setKeyListeners(boolean isPanelVisible)
 	{
 		if (!config.hotkeysOnlyWithPanel() || isPanelVisible)
 		{
@@ -229,11 +229,11 @@ public class HunllefHelperPlugin extends Plugin
 
 	private void updatePanelVisibility(boolean selectPanel)
 	{
-		boolean panelShouldBeVisible = shouldShowPanel();
+		boolean panelShouldBeAdded = shouldShowPanel();
 
-		if (panelShouldBeVisible != isPanelVisible)
+		if (panelShouldBeAdded != isPanelAdded)
 		{
-			updateNavigationBar(panelShouldBeVisible, selectPanel);
+			updateNavigationBar(panelShouldBeAdded, selectPanel);
 		}
 	}
 
@@ -294,14 +294,14 @@ public class HunllefHelperPlugin extends Plugin
 			if (selectPanel)
 			{
 				SwingUtilities.invokeLater(() -> clientToolbar.openPanel(navigationButton));
-				isPanelVisible = true;
+				isPanelAdded = true;
 			}
 		}
 		else
 		{
 			reset();
 			clientToolbar.removeNavigation(navigationButton);
-			isPanelVisible = false;
+			isPanelAdded = false;
 		}
 	}
 

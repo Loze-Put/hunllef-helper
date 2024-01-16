@@ -114,13 +114,13 @@ public class HunllefHelperPluginPanel extends PluginPanel
 	@Override
 	public void onActivate()
 	{
-		plugin.setKeyListeners();
+		plugin.setKeyListeners(true);
 	}
 
 	@Override
 	public void onDeactivate()
 	{
-		plugin.setKeyListeners();
+		plugin.setKeyListeners(false);
 	}
 
 	private JPanel createActiveView()
