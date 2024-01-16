@@ -163,7 +163,7 @@ public class HunllefHelperPlugin extends Plugin
 
 	public void setKeyListeners()
 	{
-		if (!config.hotkeysOnlyWithPanel() || navigationButton.isSelected())
+		if (!config.hotkeysOnlyWithPanel() || isPanelVisible)
 		{
 			if (keyListeners.isEmpty())
 			{
@@ -234,7 +234,6 @@ public class HunllefHelperPlugin extends Plugin
 		if (panelShouldBeVisible != isPanelVisible)
 		{
 			updateNavigationBar(panelShouldBeVisible, selectPanel);
-			isPanelVisible = panelShouldBeVisible;
 		}
 	}
 
@@ -294,20 +293,15 @@ public class HunllefHelperPlugin extends Plugin
 			clientToolbar.addNavigation(navigationButton);
 			if (selectPanel)
 			{
-				SwingUtilities.invokeLater(() ->
-				{
-					if (!navigationButton.isSelected())
-					{
-						navigationButton.getOnSelect().run();
-					}
-				});
+				SwingUtilities.invokeLater(() -> clientToolbar.openPanel(navigationButton));
+				isPanelVisible = true;
 			}
 		}
 		else
 		{
 			reset();
-			navigationButton.setSelected(false);
 			clientToolbar.removeNavigation(navigationButton);
+			isPanelVisible = false;
 		}
 	}
 
