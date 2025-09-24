@@ -89,7 +89,33 @@ public class AudioPlayer
 			}
 		}
 
-		try (
+        if (audioMode == AudioMode.Soft_ASMR)
+        {
+            String resourcePath = clipName.replace("/audio/default/", "/audio/asmr/");
+
+            InputStream resourceStream = getClass().getResourceAsStream(resourcePath);
+            if (resourceStream == null)
+            {
+                log.error("Audio file not found in resources: " + resourcePath);
+                return false;
+            }
+
+            try (BufferedInputStream bufferedStream = new BufferedInputStream(resourceStream);
+                 AudioInputStream sound = AudioSystem.getAudioInputStream(bufferedStream))
+            {
+                Clip clip = AudioSystem.getClip();
+                clips.put(clipName, clip);
+                clip.open(sound);
+                setClipVolume(clip);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                log.error("Unable to load sound from resources " + resourcePath, ex);
+            }
+        }
+
+        try (
 			InputStream audioSource = getClass().getResourceAsStream(clipName);
 			BufferedInputStream bufferedStream = new BufferedInputStream(audioSource);
 			AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(bufferedStream))

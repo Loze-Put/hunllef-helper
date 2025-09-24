@@ -31,13 +31,13 @@ public final class PluginConstants
 	public static final int ROTATION_DURATION = ATTACK_DURATION * 4;
 
 	// Sound files
-	public static final String SOUND_TWO = "/audio/two.wav";
-	public static final String SOUND_ONE = "/audio/one.wav";
-	public static final String SOUND_MAGE = "/audio/mage.wav";
-	public static final String SOUND_RANGE = "/audio/range.wav";
-	public static final String[] SOUNDS = new String[]{SOUND_MAGE, SOUND_RANGE, SOUND_ONE, SOUND_TWO};
+    public static final String SOUND_TWO   = "/audio/default/two.wav";
+    public static final String SOUND_ONE   = "/audio/default/one.wav";
+    public static final String SOUND_MAGE  = "/audio/default/mage.wav";
+    public static final String SOUND_RANGE = "/audio/default/range.wav";
+    public static final String[] SOUNDS    = new String[]{SOUND_MAGE, SOUND_RANGE, SOUND_ONE, SOUND_TWO};
 
-	// Configuration
+    // Configuration
 	public static final String CONFIG_GROUP = "hunllefhelper";
 	public static final String CONFIG_KEY_AUDIO_MODE = "audioMode";
 	public static final String CONFIG_KEY_PANEL_VISIBILITY = "panelVisibility";

@@ -4,5 +4,6 @@ public enum AudioMode
 {
 	Default,
 	Disabled,
-	Custom
+	Custom,
+    Soft_ASMR
 }
