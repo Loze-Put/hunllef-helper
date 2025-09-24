@@ -3,7 +3,7 @@ All notable changes to this plugin will be documented in this file.
 
 ----------------------------------------------------------------------
 ## [1.4.2] - 2025-09-24
-### Changed
+### Added
 - Added an ASMR-voice option as a more calm option for the Hunleff Encounter.
 
 ## [1.4.1] - 2024-01-16
