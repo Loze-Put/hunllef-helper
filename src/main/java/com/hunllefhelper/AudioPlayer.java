@@ -14,6 +14,7 @@ public class AudioPlayer
 {
 	private HashMap<String, Clip> clips = new HashMap<String, Clip>();
 	private float volume = 1f;
+    private String audioPack = "default";
 
 	public void tryLoadAudio(HunllefHelperConfig config, String[] clipNames)
 	{
@@ -22,9 +23,11 @@ public class AudioPlayer
 			return;
 		}
 
-		for (String clipName : clipNames)
+        audioPack = getAudioPackFromMode(config.audioMode());
+
+        for (String clipName : clipNames)
 		{
-			tryLoadClip(config.audioMode(), clipName);
+			tryLoadClip(clipName);
 		}
 	}
 
@@ -67,72 +70,83 @@ public class AudioPlayer
 		}
 	}
 
-	private boolean tryLoadClip(AudioMode audioMode, String clipName)
-	{
-		if (audioMode == AudioMode.Custom)
-		{
-			final File customFile = new File(RuneLite.RUNELITE_DIR, clipName);
-
-			try (
-				InputStream fileStream = new BufferedInputStream(new FileInputStream(customFile));
-				AudioInputStream sound = AudioSystem.getAudioInputStream(fileStream))
-			{
-				Clip clip = AudioSystem.getClip();
-				clips.put(clipName, clip);
-				clip.open(sound);
-				setClipVolume(clip);
-				return true;
-			}
-			catch (UnsupportedAudioFileException | IOException | LineUnavailableException | SecurityException ex)
-			{
-				log.error("Unable to load sound " + clipName, ex);
-			}
-		}
-
-        if (audioMode == AudioMode.Soft_ASMR)
+    private String getAudioPackFromMode(AudioMode audioMode)
+    {
+        switch (audioMode)
         {
-            String resourcePath = clipName.replace("/audio/default/", "/audio/asmr/");
+            case Custom:
+                return "custom";
+            case Soft_ASMR:
+                return "asmr";
+            case Default:
+            default:
+                return "default";
+        }
+    }
 
-            InputStream resourceStream = getClass().getResourceAsStream(resourcePath);
-            if (resourceStream == null)
+    private boolean tryLoadClip(String clipName)
+    {
+        try
+        {
+            InputStream audioStream = getAudioStream(clipName);
+            if (audioStream == null)
             {
-                log.error("Audio file not found in resources: " + resourcePath);
                 return false;
             }
 
-            try (BufferedInputStream bufferedStream = new BufferedInputStream(resourceStream);
-                 AudioInputStream sound = AudioSystem.getAudioInputStream(bufferedStream))
-            {
-                Clip clip = AudioSystem.getClip();
-                clips.put(clipName, clip);
-                clip.open(sound);
-                setClipVolume(clip);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                log.error("Unable to load sound from resources " + resourcePath, ex);
-            }
+            return loadClipFromStream(audioStream, clipName);
+        }
+        catch (Exception ex)
+        {
+            log.error("Unable to load sound " + clipName, ex);
+            return false;
+        }
+    }
+
+    private InputStream getAudioStream(String clipName) throws IOException
+    {
+        String filename = clipName.substring(clipName.lastIndexOf('/') + 1);
+
+        if (audioPack.equals("custom"))
+        {
+            String path = "audio/" + filename;
+            final File customFile = new File(RuneLite.RUNELITE_DIR, path);
+            log.debug("Loading custom audio from: " + customFile.getAbsolutePath());
+            return new BufferedInputStream(new FileInputStream(customFile));
         }
 
-        try (
-			InputStream audioSource = getClass().getResourceAsStream(clipName);
-			BufferedInputStream bufferedStream = new BufferedInputStream(audioSource);
-			AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(bufferedStream))
-		{
-			Clip clip = AudioSystem.getClip();
-			clips.put(clipName, clip);
-			clip.open(audioInputStream);
-			setClipVolume(clip);
-			return true;
-		}
-		catch (UnsupportedAudioFileException | IOException | LineUnavailableException | SecurityException ex)
-		{
-			log.error("Unable to load sound " + clipName, ex);
-		}
+        String path = String.format("/audio/%s/%s", audioPack, filename);
+        InputStream resourceStream = getClass().getResourceAsStream(path);
 
-		return false;
-	}
+        if (resourceStream == null)
+        {
+            log.error("Audio file not found in resources: " + path);
+            return null;
+        }
+
+        return new BufferedInputStream(resourceStream);
+    }
+
+    private boolean loadClipFromStream(InputStream audioStream, String clipName)
+    {
+        try (BufferedInputStream bufferedStream =
+                     audioStream instanceof BufferedInputStream ?
+                             (BufferedInputStream) audioStream :
+                             new BufferedInputStream(audioStream);
+             AudioInputStream sound = AudioSystem.getAudioInputStream(bufferedStream))
+        {
+            Clip clip = AudioSystem.getClip();
+            clips.put(clipName, clip);
+            clip.open(sound);
+            setClipVolume(clip);
+            return true;
+        }
+        catch (UnsupportedAudioFileException | IOException | LineUnavailableException | SecurityException ex)
+        {
+            log.error("Unable to load clip from stream for " + clipName, ex);
+            return false;
+        }
+    }
 
 	private void setClipVolume(Clip clip)
 	{
