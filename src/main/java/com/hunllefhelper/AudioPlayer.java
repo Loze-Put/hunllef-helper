@@ -18,16 +18,18 @@ public class AudioPlayer
 
 	public void tryLoadAudio(HunllefHelperConfig config, String[] clipNames)
 	{
-		if (config.audioMode() == AudioMode.Disabled)
+        AudioMode audioMode = config.audioMode();
+
+		if (audioMode == AudioMode.Disabled)
 		{
 			return;
 		}
 
-        audioPack = getAudioPackFromMode(config.audioMode());
+        audioPack = config.audioMode().getDirName();
 
         for (String clipName : clipNames)
 		{
-			tryLoadClip(clipName);
+			tryLoadClip(audioMode, clipName);
 		}
 	}
 
@@ -70,25 +72,11 @@ public class AudioPlayer
 		}
 	}
 
-    private String getAudioPackFromMode(AudioMode audioMode)
-    {
-        switch (audioMode)
-        {
-            case Custom:
-                return "custom";
-            case Soft_ASMR:
-                return "asmr";
-            case Default:
-            default:
-                return "default";
-        }
-    }
-
-    private boolean tryLoadClip(String clipName)
+    private boolean tryLoadClip(AudioMode audioMode, String clipName)
     {
         try
         {
-            InputStream audioStream = getAudioStream(clipName);
+            InputStream audioStream = getAudioStream(audioMode, clipName);
             if (audioStream == null)
             {
                 return false;
@@ -103,11 +91,11 @@ public class AudioPlayer
         }
     }
 
-    private InputStream getAudioStream(String clipName) throws IOException
+    private InputStream getAudioStream(AudioMode audioMode, String clipName) throws IOException
     {
         String filename = clipName.substring(clipName.lastIndexOf('/') + 1);
 
-        if (audioPack.equals("custom"))
+        if (audioMode == AudioMode.Custom)
         {
             String path = "audio/" + filename;
             final File customFile = new File(RuneLite.RUNELITE_DIR, path);
