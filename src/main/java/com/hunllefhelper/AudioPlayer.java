@@ -14,7 +14,6 @@ public class AudioPlayer
 {
 	private HashMap<String, Clip> clips = new HashMap<String, Clip>();
 	private float volume = 1f;
-    private String audioPack = "default";
 
 	public void tryLoadAudio(HunllefHelperConfig config, String[] clipNames)
 	{
@@ -25,11 +24,11 @@ public class AudioPlayer
 			return;
 		}
 
-        audioPack = config.audioMode().getDirName();
+        String audioPack = config.audioMode().getDirName();
 
         for (String clipName : clipNames)
 		{
-			tryLoadClip(audioMode, clipName);
+			tryLoadClip(audioMode, audioPack, clipName);
 		}
 	}
 
@@ -72,11 +71,12 @@ public class AudioPlayer
 		}
 	}
 
-    private boolean tryLoadClip(AudioMode audioMode, String clipName)
+    private boolean tryLoadClip(AudioMode audioMode, String audioPack, String clipName)
     {
+        InputStream audioStream = null;
         try
         {
-            InputStream audioStream = getAudioStream(audioMode, clipName);
+            audioStream = getAudioStream(audioMode, audioPack, clipName);
             if (audioStream == null)
             {
                 return false;
@@ -89,9 +89,23 @@ public class AudioPlayer
             log.error("Unable to load sound " + clipName, ex);
             return false;
         }
+        finally
+        {
+            if (audioStream != null)
+            {
+                try
+                {
+                    audioStream.close();
+                }
+                catch (IOException ex)
+                {
+                    log.warn("Failed to close audio stream for " + clipName, ex);
+                }
+            }
+        }
     }
 
-    private InputStream getAudioStream(AudioMode audioMode, String clipName) throws IOException
+    private InputStream getAudioStream(AudioMode audioMode, String audioPack, String clipName) throws IOException
     {
         String filename = clipName.substring(clipName.lastIndexOf('/') + 1);
 
