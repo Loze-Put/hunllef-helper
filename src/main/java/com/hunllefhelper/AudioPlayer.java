@@ -107,17 +107,15 @@ public class AudioPlayer
 
     private InputStream getAudioStream(AudioMode audioMode, String audioPack, String clipName) throws IOException
     {
-        String filename = clipName.substring(clipName.lastIndexOf('/') + 1);
-
         if (audioMode == AudioMode.Custom)
         {
-            String path = "audio/" + filename;
+            String path = "audio/" + clipName;
             final File customFile = new File(RuneLite.RUNELITE_DIR, path);
             log.debug("Loading custom audio from: " + customFile.getAbsolutePath());
             return new BufferedInputStream(new FileInputStream(customFile));
         }
 
-        String path = String.format("/audio/%s/%s", audioPack, filename);
+        String path = String.format("/audio/%s/%s", audioPack, clipName);
         InputStream resourceStream = getClass().getResourceAsStream(path);
 
         if (resourceStream == null)
