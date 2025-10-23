@@ -6,8 +6,8 @@ import net.runelite.client.util.HotkeyListener;
 
 class ConditionalHotkeyListener extends HotkeyListener
 {
-	private Runnable hotkeyPressedHandler;
-	private Supplier<Boolean> hotkeyPressedEnabledSupplier;
+	private final Runnable hotkeyPressedHandler;
+	private final Supplier<Boolean> hotkeyPressedEnabledSupplier;
 
 	public ConditionalHotkeyListener(Supplier<Keybind> hotkeySupplier, Runnable hotkeyPressedHandler, Supplier<Boolean> hotkeyPressedEnabledSupplier)
 	{

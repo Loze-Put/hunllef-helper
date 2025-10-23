@@ -106,6 +106,10 @@ public class HunllefHelperPlugin extends Plugin
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event)
 	{
+        if (!PluginConstants.CONFIG_GROUP.equals(event.getGroup())) {
+            return;
+        }
+
 		switch (event.getKey())
 		{
 			case CONFIG_KEY_AUDIO_MODE:
@@ -331,7 +335,7 @@ public class HunllefHelperPlugin extends Plugin
 		Boolean autoHide = configManager.getConfiguration(CONFIG_GROUP, "autoHide", Boolean.TYPE);
 		if (autoHide != null)
 		{
-			if (autoHide == false)
+			if (!autoHide)
 			{
 				configManager.setConfiguration(CONFIG_GROUP, CONFIG_KEY_PANEL_VISIBILITY, PanelVisibility.Always);
 			}

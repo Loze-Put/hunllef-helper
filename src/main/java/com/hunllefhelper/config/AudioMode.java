@@ -2,7 +2,6 @@ package com.hunllefhelper.config;
 
 import lombok.Getter;
 
-
 public enum AudioMode
 {
     Default("default"),

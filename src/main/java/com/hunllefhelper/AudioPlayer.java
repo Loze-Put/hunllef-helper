@@ -7,12 +7,13 @@ import net.runelite.client.RuneLite;
 
 import javax.sound.sampled.*;
 import java.io.*;
+import java.nio.file.Files;
 import java.util.HashMap;
 
 @Slf4j
 public class AudioPlayer
 {
-	private HashMap<String, Clip> clips = new HashMap<String, Clip>();
+	private final HashMap<String, Clip> clips = new HashMap<String, Clip>();
 	private float volume = 1f;
 
 	public void tryLoadAudio(HunllefHelperConfig config, String[] clipNames)
@@ -86,7 +87,7 @@ public class AudioPlayer
         }
         catch (Exception ex)
         {
-            log.error("Unable to load sound " + clipName, ex);
+            log.error("Unable to load sound {}", clipName, ex);
             return false;
         }
         finally
@@ -99,7 +100,7 @@ public class AudioPlayer
                 }
                 catch (IOException ex)
                 {
-                    log.warn("Failed to close audio stream for " + clipName, ex);
+                    log.warn("Failed to close audio stream for {}", clipName, ex);
                 }
             }
         }
@@ -111,8 +112,8 @@ public class AudioPlayer
         {
             String path = "audio/" + clipName;
             final File customFile = new File(RuneLite.RUNELITE_DIR, path);
-            log.debug("Loading custom audio from: " + customFile.getAbsolutePath());
-            return new BufferedInputStream(new FileInputStream(customFile));
+            log.debug("Loading custom audio from: {}", customFile.getAbsolutePath());
+            return new BufferedInputStream(Files.newInputStream(customFile.toPath()));
         }
 
         String path = String.format("/audio/%s/%s", audioPack, clipName);
@@ -120,7 +121,7 @@ public class AudioPlayer
 
         if (resourceStream == null)
         {
-            log.error("Audio file not found in resources: " + path);
+            log.error("Audio file not found in resources: {}", path);
             return null;
         }
 
@@ -143,7 +144,7 @@ public class AudioPlayer
         }
         catch (UnsupportedAudioFileException | IOException | LineUnavailableException | SecurityException ex)
         {
-            log.error("Unable to load clip from stream for " + clipName, ex);
+            log.error("Unable to load clip from stream for {}", clipName, ex);
             return false;
         }
     }
