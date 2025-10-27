@@ -69,7 +69,6 @@ public class HunllefHelperPlugin extends Plugin
 		migrate();
 
 		audioManager.setVolume(config.audioVolume());
-		audioManager.loadAudio(config, SOUNDS);
 
 		panel = injector.getInstance(HunllefHelperPluginPanel.class);
 		panel.setCounterActiveState(false);
@@ -94,7 +93,6 @@ public class HunllefHelperPlugin extends Plugin
 		shutdownExecutorService();
 		panel = null;
 		navigationButton = null;
-		audioManager.unloadAudio();
 	}
 
 	@Subscribe
@@ -112,10 +110,6 @@ public class HunllefHelperPlugin extends Plugin
 
 		switch (event.getKey())
 		{
-			case CONFIG_KEY_AUDIO_MODE:
-				audioManager.unloadAudio();
-				audioManager.loadAudio(config, SOUNDS);
-				break;
 			case CONFIG_KEY_PANEL_VISIBILITY:
 				updatePanelVisibility(false);
 				break;
@@ -228,7 +222,7 @@ public class HunllefHelperPlugin extends Plugin
 			return;
 		}
 
-		executorService.submit(() -> audioManager.playSoundClip(soundFile));
+		executorService.submit(() -> audioManager.playSoundClip(soundFile, config.audioMode()));
 	}
 
 	private void updatePanelVisibility(boolean selectPanel)
