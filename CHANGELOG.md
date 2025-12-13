@@ -2,6 +2,10 @@
 All notable changes to this plugin will be documented in this file.
 
 ----------------------------------------------------------------------
+## [1.4.3] - 2025-12-13
+### Fixed
+- Fixed an issue where the side panel would show on login.
+
 ## [1.4.2] - 2025-10-23
 ### Added
 - Added an ASMR-voice option as a more calm option for the Hunleff Encounter.

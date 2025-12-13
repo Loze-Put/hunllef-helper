@@ -82,7 +82,7 @@ public class HunllefHelperPlugin extends Plugin
 			.build();
 
 		updatePanelVisibility(false);
-		setKeyListeners(isPanelAdded);
+		setKeyListeners(false);
 	}
 
 	@Override
@@ -289,10 +289,11 @@ public class HunllefHelperPlugin extends Plugin
 		if (enable)
 		{
 			clientToolbar.addNavigation(navigationButton);
+            isPanelAdded = true;
+
 			if (selectPanel)
 			{
 				SwingUtilities.invokeLater(() -> clientToolbar.openPanel(navigationButton));
-				isPanelAdded = true;
 			}
 		}
 		else
